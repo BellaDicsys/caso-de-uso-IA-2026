@@ -14,9 +14,10 @@
 | SDK | `anthropic` (oficial) | ≥ 0.116.0 — única dependencia de runtime del núcleo |
 | API HTTP (opcional) | FastAPI + uvicorn | extra `[api]`; sirve REST + chat web |
 | Empaquetado | `pyproject.toml` (setuptools) | layout `src/`, consola `enterprise-agents` |
-| Testing | pytest + pytest-cov | ≥ 8.0 — 54 tests, cobertura 94 % (umbral 85 % en CI) |
+| Testing | pytest + pytest-cov | ≥ 8.0 — 94 tests, cobertura 94 % (umbral 85 % en CI) |
 | Calidad de código | ruff (lint + formato) | reglas E, F, W, I, N, UP, B, SIM; línea 100 |
 | CI/CD | GitHub Actions | lint + tests + demo offline en cada push |
+| Versionado | propio (`versionado.py`) | semver derivado de Conventional Commits; tag, changelog y release en CI |
 
 **Sin dependencias de frameworks de orquestación** (LangChain, CrewAI, etc.): la
 orquestación se implementa directamente sobre la Messages API con *tool use*
@@ -27,9 +28,10 @@ orquestación se implementa directamente sobre la Messages API con *tool use*
 ```
 src/enterprise_agents/
 ├── config.py            # Settings (env vars), rutas de datos, modelo default
-├── cli.py               # Entrada CLI: demo / ask / eval / serve
+├── cli.py               # Entrada CLI: demo / ask / eval / serve / version
 ├── api.py               # API HTTP (FastAPI): POST /consultar, GET /salud, chat web
 ├── evals.py             # Set de evaluación: 6 escenarios con criterios verificables
+├── versionado.py        # Conventional Commits → semver + changelog + release
 ├── static/index.html    # Interfaz de chat web (autocontenida, sin dependencias)
 ├── orchestrator.py      # crear_orquestador(): agente coordinador
 ├── agents/
@@ -139,9 +141,29 @@ Plantilla en `.env.example`; `.env` está en `.gitignore`.
 | Unitarios de herramientas | `test_tools_analytics.py`, `test_tools_finance.py`, `test_tools_documents.py`, `test_tools_hr.py` | Cálculos, ordenamientos, umbrales, alertas de riesgo, path traversal, insensibilidad a mayúsculas |
 | Integración agéntica | `test_orchestrator.py`, `test_api.py`, `test_evals.py` | Flujo completo orquestador→especialista→herramienta→síntesis; propagación de errores como `tool_result`; corte por límite de iteraciones; consultas fuera de dominio |
 
-Ejecución: `python -m pytest --cov` (54 tests, ~3 s, sin red). CI corre además
+Ejecución: `python -m pytest --cov` (94 tests, ~3 s, sin red). CI corre además
 `ruff check`, `ruff format --check` y `python -m enterprise_agents demo` como smoke
 test, en Python 3.10 y 3.12.
+
+## 5.1 Versionado y publicación
+
+La versión es **única** (`enterprise_agents.__version__`): `pyproject.toml` la
+declara como `dynamic` y la lee de ahí, y la API HTTP la expone en su esquema
+OpenAPI. `versionado.py` la deriva de los mensajes de commit:
+
+| Entrada | Salida |
+|---|---|
+| `fix:` · `perf:` · `refactor:` · `revert:` | salto de parche |
+| `feat:` | salto menor |
+| `feat!:` / `BREAKING CHANGE:` | salto mayor (menor mientras la versión sea `0.x`) |
+| `docs:` · `test:` · `ci:` · `build:` · `chore:` · `style:` | sin salto (pero `docs:` figura en el changelog) |
+
+El análisis son funciones puras (`analizar`, `siguiente_version`,
+`notas_de_version`, `actualizar_changelog`) cubiertas al 100 %; las únicas
+operaciones con efectos son `git describe` / `git log` y la escritura de
+`__init__.py` y `CHANGELOG.md`. El workflow `release.yml` corre en la rama por
+defecto, commitea con `[skip ci]`, crea el tag `vX.Y.Z` y publica la release.
+Detalle en ADR-0006.
 
 ## 6. Rendimiento y costos (modo live)
 

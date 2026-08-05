@@ -13,6 +13,7 @@ python -m pytest          # tests (deben pasar siempre; no requieren red ni API 
 ruff check . && ruff format --check .   # lint y formato (CI los exige)
 python -m enterprise_agents demo            # smoke test offline
 python -m enterprise_agents eval            # set de evaluación (6 escenarios, mock)
+python -m enterprise_agents version --proximo   # versión que se publicaría con los commits actuales
 ```
 
 ## Convenciones
@@ -31,6 +32,11 @@ python -m enterprise_agents eval            # set de evaluación (6 escenarios, 
   No reimplementar ninguno de los dos en un módulo nuevo.
 - **Frontend**: los estilos y utilidades comunes viven en `static/ds.css` y
   `static/ds.js` (incluido `esc()` para escapar antes de cualquier `innerHTML`).
+- **Commits**: obligatorio [Conventional Commits](https://www.conventionalcommits.org/es/)
+  (`feat:`, `fix:`, `perf:`, `refactor:`, `docs:`, `test:`, `ci:`, `chore:`, con
+  alcance opcional y `!` para rupturas). De ahí salen la versión y el `CHANGELOG.md`
+  (ver `versionado.py`): un commit fuera de convención no aparece en el historial
+  publicado. Nunca editar `__version__` ni `CHANGELOG.md` a mano.
 - **Decisiones estructurales**: registrar en `docs/adr/` (formato de los existentes).
 - **Secretos**: solo por variables de entorno; `.env` está en `.gitignore`. Nunca
   commitear claves ni datos reales de clientes/empleados.

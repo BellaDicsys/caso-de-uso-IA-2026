@@ -1,0 +1,60 @@
+# Changelog
+
+Todas las versiones publicadas de la Enterprise Agent Suite. El formato sigue
+[Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado es
+[semántico](https://semver.org/lang/es/); las entradas se generan
+automáticamente desde los *Conventional Commits* (ver
+[docs/adr/0006-versionado-automatico.md](docs/adr/0006-versionado-automatico.md)).
+
+## 0.3.0 — 2026-08-05
+
+### Nuevas funcionalidades
+
+- **versionado**: versionado automático por Conventional Commits, con changelog,
+  tag y release generados en CI
+- **tablero**: tablero de control con KPIs, alertas tempranas por severidad y
+  gráficos SVG con paleta validada para daltonismo
+- **auth**: autenticación por sesión y RBAC de tres roles (consulta, gestor, admin)
+- **ds**: design system propio (`ds.css` / `ds.js`) estilo Material 3, con tema
+  claro/oscuro y microinteracciones
+- **movil**: versión móvil de alcance reducido con chat de voz (Web Speech API)
+- **usuarios**: alta, baja y asignación de roles desde la web (rol admin)
+
+### Correcciones
+
+- **seguridad**: correcciones de la auditoría adversarial — open redirect en el
+  login, revocación de sesiones al eliminar un usuario, límite de intentos de
+  autenticación, cookie `Secure` y RBAC a nivel de herramienta
+- **ruteo**: coincidencia por prefijo de palabra en el cliente mock, para evitar
+  falsos positivos por subcadena
+
+### Rendimiento
+
+- **api**: orquestadores por rol construidos una sola vez y páginas HTML cacheadas
+- **datos**: lectura de CSV con caché invalidada por fecha de modificación
+
+## 0.2.0 — 2026-08-04
+
+### Nuevas funcionalidades
+
+- **finanzas**: cuarto dominio (cobranzas, facturas vencidas y deuda por cliente)
+- **api**: API HTTP con FastAPI y chat web sobre el orquestador
+- **evals**: set de evaluación de seis escenarios con criterios verificables
+
+### Refactors
+
+- **paquete**: rename del proyecto a Enterprise Agent Suite
+
+## 0.1.0 — 2026-08-03
+
+### Nuevas funcionalidades
+
+- **agentes**: orquestador y especialistas de analítica, gestión documental y
+  personal, con herramientas de dominio sobre datos sintéticos
+- **llm**: capa `LLMClient` con cliente Anthropic y cliente mock determinístico
+- **cli**: comandos `demo` y `ask`
+
+### Documentación
+
+- memoria descriptiva, documento funcional, especificaciones técnicas,
+  arquitectura, casos de innovación, guía de vibecoding y ADRs

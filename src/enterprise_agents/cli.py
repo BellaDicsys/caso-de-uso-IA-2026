@@ -6,6 +6,7 @@ Uso:
     enterprise-agents ask --live "..."    # fuerza el uso de la API real
     enterprise-agents eval [--live]       # set de evaluación (mock o modelo real)
     enterprise-agents serve [--port N]    # API HTTP + chat web
+    enterprise-agents version [--proximo] # versión actual / próxima según los commits
 
 Sin ANTHROPIC_API_KEY, la suite corre en modo demo (mock) sin llamadas
 externas, para que el repositorio sea evaluable sin credenciales.
@@ -48,6 +49,21 @@ def _responder(pregunta: str, llm: LLMClient, settings: Settings) -> str:
     return orquestador.run(pregunta)
 
 
+def _comando_version(args: argparse.Namespace) -> int:
+    """Consulta o aplica el versionado automático (ver `versionado.py`)."""
+    from enterprise_agents import versionado
+
+    if not (args.proximo or args.notas or args.aplicar):
+        print(versionado.leer_version())
+        return 0
+
+    publicacion = versionado.analizar_repo()
+    if args.aplicar and publicacion.hay_cambios:
+        versionado.aplicar(publicacion)
+    print(publicacion.notas if args.notas else publicacion.version)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="enterprise-agents",
@@ -71,11 +87,21 @@ def main(argv: list[str] | None = None) -> int:
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", type=int, default=8000)
 
+    ver = sub.add_parser("version", help="versionado automático (Conventional Commits)")
+    ver.add_argument(
+        "--proximo", action="store_true", help="versión que correspondería publicar hoy"
+    )
+    ver.add_argument("--notas", action="store_true", help="notas de esa versión (changelog)")
+    ver.add_argument("--aplicar", action="store_true", help="escribe __version__ y CHANGELOG.md")
+
     args = parser.parse_args(argv)
     logging.basicConfig(
         level=logging.INFO if args.verbose else logging.WARNING,
         format="%(levelname)s %(message)s",
     )
+
+    if args.comando == "version":
+        return _comando_version(args)
 
     if args.comando == "serve":
         # Import diferido: FastAPI/uvicorn solo se necesitan para la API.

@@ -34,11 +34,12 @@ flowchart TD
 | Design system | propio (`ds.css` + `ds.js`) | tokens estilo Material 3, tema claro/oscuro, microinteracciones |
 | Tablero | SVG propio | KPIs + alertas tempranas + 3 gráficos, paleta validada para daltonismo |
 | Móvil | Web Speech API | chat de voz: dictado (SpeechRecognition) + respuesta hablada (speechSynthesis) |
-| Calidad | pytest + pytest-cov + ruff | 54 tests, cobertura 94% (umbral 85% en CI), lint y formato |
+| Calidad | pytest + pytest-cov + ruff | 94 tests, cobertura 94% (umbral 85% en CI), lint y formato |
+| Versionado | propio (`versionado.py`) | semver automático desde Conventional Commits: changelog, tag y release en CI |
 
 ## Superficies de uso
 
-- **CLI** — `enterprise-agents demo | ask | eval | serve`
+- **CLI** — `enterprise-agents demo | ask | eval | serve | version`
 - **Chat web** (`/`) — asistente conversacional sobre el orquestador
 - **Versión móvil** (`/movil`) — alcance reducido (solo chat) con **entrada y salida por voz**
 - **Tablero de control** (`/tablero`) — KPIs y **alertas tempranas** por severidad, con
@@ -83,13 +84,39 @@ enterprise-agents ask --live "¿Cuánto facturamos a Banco Andino y quién puede
 ## Verificación
 
 ```bash
-python -m pytest --cov   # 54 tests + cobertura (94 %)
+python -m pytest --cov   # 94 tests + cobertura (94 %)
 ruff check .             # lint
 ruff format --check .    # formato
 ```
 
 El pipeline de CI (`.github/workflows/ci.yml`) ejecuta lint, tests con umbral de
 cobertura del 85 % y la demo offline como smoke test en cada push.
+
+## Versionado automático
+
+La versión no se toca a mano: se deriva de los mensajes de commit
+([Conventional Commits](https://www.conventionalcommits.org/es/)) y vive en un
+solo lugar (`enterprise_agents.__version__`, que `pyproject.toml` lee como
+versión dinámica y la API expone en `/docs`).
+
+| Commit | Efecto |
+|---|---|
+| `fix:` · `perf:` · `refactor:` · `revert:` | versión de parche (`0.3.0` → `0.3.1`) |
+| `feat:` | versión menor (`0.3.0` → `0.4.0`) |
+| `feat!:` o `BREAKING CHANGE:` en el cuerpo | versión mayor (menor mientras el proyecto sea `0.x`) |
+| `docs:` · `test:` · `ci:` · `build:` · `chore:` · `style:` | no publican versión |
+
+```bash
+enterprise-agents version             # versión actual
+enterprise-agents version --proximo   # la que se publicaría con los commits actuales
+enterprise-agents version --notas     # las notas de esa versión
+```
+
+En cada push a la rama por defecto, `.github/workflows/release.yml` calcula el
+salto sobre los commits posteriores al último tag, actualiza
+[CHANGELOG.md](CHANGELOG.md), crea el tag `vX.Y.Z` y publica la release de
+GitHub con las notas generadas. Fundamento en
+[ADR-0006](docs/adr/0006-versionado-automatico.md).
 
 ## Estructura del repositorio
 
@@ -105,9 +132,10 @@ cobertura del 85 % y la demo offline como smoke test en cada push.
 │   ├── auth.py                # Autenticación, usuarios y roles (RBAC)
 │   ├── api.py                 # API HTTP (FastAPI): chat, tablero, usuarios, móvil
 │   ├── evals.py               # Set de evaluación de escenarios
-│   ├── cli.py                 # CLI: demo / ask / eval / serve
+│   ├── versionado.py          # Versionado automático (Conventional Commits → semver)
+│   ├── cli.py                 # CLI: demo / ask / eval / serve / version
 │   └── static/                # DS propio (ds.css/ds.js) + páginas (chat, tablero, usuarios, móvil, login)
-└── tests/                     # Suite de tests (54, sin llamadas externas)
+└── tests/                     # Suite de tests (94, sin llamadas externas)
 ```
 
 ## Documentación
@@ -121,6 +149,7 @@ cobertura del 85 % y la demo offline como smoke test en cada push.
 | [docs/auditoria-adversarial.md](docs/auditoria-adversarial.md) | **Auditoría adversarial**: hallazgos de seguridad, correctitud, calidad y rendimiento, con lo corregido y los riesgos aceptados |
 | [docs/casos-innovacion.md](docs/casos-innovacion.md) | Casos de innovación en gestión empresarial con IA agéntica que sirvieron de puntapié inicial |
 | [docs/guia-vibecoding.md](docs/guia-vibecoding.md) | Mejores prácticas de *vibecoding* / desarrollo asistido por IA aplicadas en este repositorio |
+| [CHANGELOG.md](CHANGELOG.md) | Historial de versiones, generado automáticamente desde los commits |
 | [docs/adr/](docs/adr/) | Registro de decisiones de arquitectura (ADRs) |
 | [CLAUDE.md](CLAUDE.md) | Contexto para agentes de código que trabajen sobre este repositorio |
 

@@ -1,0 +1,61 @@
+name: Release
+
+# Publica una versión nueva cuando hay commits que lo ameritan (Conventional
+# Commits) en la rama por defecto del repositorio. Ver
+# docs/adr/0006-versionado-automatico.md.
+on:
+  push:
+    branches: ["**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publicar:
+    # Solo la rama por defecto publica versiones (sea cual sea su nombre).
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # el análisis necesita el historial y los tags
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar el paquete
+        run: pip install -e .
+
+      - name: Calcular versión y actualizar changelog
+        id: versionar
+        run: |
+          python -m enterprise_agents version --aplicar --notas > /tmp/notas.md
+          if git diff --quiet; then
+            echo "publicar=no" >> "$GITHUB_OUTPUT"
+            echo "Sin commits que ameriten una versión nueva."
+          else
+            echo "publicar=si" >> "$GITHUB_OUTPUT"
+            echo "version=$(python -m enterprise_agents version)" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit, tag y push
+        if: steps.versionar.outputs.publicar == 'si'
+        env:
+          VERSION: ${{ steps.versionar.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md src/enterprise_agents/__init__.py
+          # [skip ci] evita que el commit de release dispare este workflow otra vez.
+          git commit -m "chore(release): v$VERSION [skip ci]"
+          git tag -a "v$VERSION" -m "v$VERSION"
+          git push origin HEAD --follow-tags
+
+      - name: Crear la release en GitHub
+        if: steps.versionar.outputs.publicar == 'si'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.versionar.outputs.version }}
+        run: gh release create "v$VERSION" --title "v$VERSION" --notes-file /tmp/notas.md

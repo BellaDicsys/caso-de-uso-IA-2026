@@ -115,3 +115,6 @@ Las decisiones estructurales están documentadas como ADRs en [`docs/adr/`](adr/
 - [ADR-0001 — Arquitectura multi-agente orquestador + especialistas](adr/0001-arquitectura-multiagente.md)
 - [ADR-0002 — SDK de Anthropic, modelo y bucle agéntico propio](adr/0002-sdk-anthropic-y-modelo.md)
 - [ADR-0003 — Modo demo offline (mock) como ciudadano de primera clase](adr/0003-modo-mock.md)
+- [ADR-0004 — Superficie web y design system propio](adr/0004-superficie-web-y-design-system.md)
+- [ADR-0005 — Autenticación por sesión y roles](adr/0005-autenticacion-y-roles.md)
+- [ADR-0006 — Versionado automático desde los mensajes de commit](adr/0006-versionado-automatico.md)

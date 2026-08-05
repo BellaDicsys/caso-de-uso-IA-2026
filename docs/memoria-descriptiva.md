@@ -79,6 +79,8 @@ documentada en [guia-vibecoding.md](guia-vibecoding.md):
 - iteraciones chicas con criterio de aceptación verificable;
 - verificación automática en cada paso (tests, lint, formato, smoke test);
 - decisiones estructurales registradas como ADRs en el momento de tomarlas;
+- historial legible por máquina: *Conventional Commits* de los que se derivan la
+  versión, el changelog y las releases, sin intervención manual;
 - contexto operativo del repositorio para agentes de código (`CLAUDE.md`);
 - secretos y datos reales fuera del repositorio por diseño.
 
@@ -88,9 +90,9 @@ documentada en [guia-vibecoding.md](guia-vibecoding.md):
 |---|---|
 | Producto | Suite con 4 dominios de negocio, 5 escenarios de demo, consultas libres, API HTTP y chat web |
 | Código | ~2.700 líneas (código, tests, datos y docs); núcleo con 1 sola dependencia de runtime |
-| Calidad | 54 tests automatizados (cobertura 94 %) + set de evaluación de 6 escenarios; lint y formato limpios; CI en GitHub Actions; auditoría adversarial documentada |
+| Calidad | 94 tests automatizados (cobertura 94 %) + set de evaluación de 6 escenarios; lint y formato limpios; CI en GitHub Actions; auditoría adversarial documentada |
 | Evaluabilidad | Demo completa sin credenciales en 2 comandos |
-| Documentación | 7 documentos: arquitectura, especificaciones técnicas, funcional, memoria, investigación de mercado, guía de vibecoding y 3 ADRs |
+| Documentación | 8 documentos: arquitectura, especificaciones técnicas, funcional, memoria, investigación de mercado, guía de vibecoding, auditoría adversarial y 6 ADRs, más el changelog generado |
 | Seguridad | Validación de argumentos del modelo, bloqueo de path traversal, límites de iteración, manejo de rechazos del modelo |
 
 ## 6. Líneas de evolución

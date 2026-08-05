@@ -69,3 +69,5 @@ flowchart LR
 - [ ] `.env.example` documentado; secretos jamás en el repo
 - [ ] Escenarios de demo ejecutables sin credenciales (evaluabilidad)
 - [ ] Mensajes de commit que expliquen el *por qué*, no solo el *qué*
+- [ ] Convención de commits que la máquina pueda leer (versión y changelog
+      derivados, no redactados a mano)
