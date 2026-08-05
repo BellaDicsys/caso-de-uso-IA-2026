@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ingresar — Enterprise Agent Suite</title>
+<link rel="stylesheet" href="/ds.css">
+<style>
+  main { min-height: 100vh; display: grid; place-items: center; padding: 1rem; }
+  .ds-tarjeta { width: min(94vw, 380px); }
+  .marca { text-align: center; margin-bottom: 1rem; }
+  .marca .logo { font-size: 2rem; }
+  .marca h1 { margin: .3rem 0 0; font-size: 1.15rem; }
+  .marca p { margin: .2rem 0 0; color: var(--ds-tinta-suave); font-size: .82rem; }
+  form { display: grid; gap: .9rem; margin-top: 1rem; }
+  .acciones { display: flex; align-items: center; gap: .8rem; margin-top: .3rem; }
+  .acciones .ds-btn.primario { flex: 1; }
+  #progreso { visibility: hidden; margin-top: .8rem; }
+  .demo { margin-top: 1.1rem; padding-top: .9rem; border-top: 1px solid var(--ds-borde);
+          font-size: .76rem; color: var(--ds-tinta-suave); }
+  .demo code { background: var(--ds-superficie-2); padding: .05rem .35rem; border-radius: 4px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="ds-tarjeta ds-aparece">
+    <div class="marca">
+      <div class="logo">🧭</div>
+      <h1>Enterprise Agent Suite</h1>
+      <p>Ingresá con tu usuario corporativo</p>
+    </div>
+    <form id="formulario">
+      <div>
+        <div class="ds-campo" id="campo-usuario">
+          <input id="usuario" placeholder=" " autocomplete="username" required>
+          <label for="usuario">Usuario</label>
+        </div>
+        <div class="ds-ayuda" id="ayuda-usuario"></div>
+      </div>
+      <div>
+        <div class="ds-campo" id="campo-clave">
+          <input id="clave" type="password" placeholder=" " autocomplete="current-password" required>
+          <label for="clave">Clave</label>
+        </div>
+        <div class="ds-ayuda" id="ayuda-clave"></div>
+      </div>
+      <div class="acciones">
+        <button class="ds-btn primario" id="boton" type="submit">Ingresar</button>
+        <button class="ds-tema" type="button" onclick="alternarTema()"
+                aria-label="cambiar tema"></button>
+      </div>
+      <div class="ds-progreso" id="progreso"></div>
+    </form>
+    <div class="demo">
+      Usuarios de demostración: <code>admin</code> / <code>gestion</code> /
+      <code>consulta</code> — clave: <code>&lt;usuario&gt;2026</code>
+    </div>
+  </div>
+</main>
+<script src="/ds.js"></script>
+<script>
+  const form = document.getElementById("formulario");
+  const boton = document.getElementById("boton");
+  const progreso = document.getElementById("progreso");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    boton.disabled = true;
+    progreso.style.visibility = "visible";
+    document.getElementById("campo-clave").classList.remove("error");
+    try {
+      const r = await fetch("/entrar", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          usuario: document.getElementById("usuario").value.trim(),
+          clave: document.getElementById("clave").value,
+        }),
+      });
+      if (r.status === 401) {
+        document.getElementById("campo-clave").classList.add("error");
+        document.getElementById("ayuda-clave").textContent = "Usuario o clave incorrectos.";
+        snackbar("Usuario o clave incorrectos.", "error");
+        return;
+      }
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      snackbar("Sesión iniciada", "ok");
+      const destino = new URLSearchParams(location.search).get("next") || "/";
+      location.href = destino;
+    } catch (err) {
+      snackbar("No se pudo conectar con el servidor.", "error");
+    } finally {
+      boton.disabled = false;
+      progreso.style.visibility = "hidden";
+    }
+  });
+</script>
+</body>
+</html>

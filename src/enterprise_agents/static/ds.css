@@ -1,0 +1,238 @@
+/* ============================================================
+   EAS-DS — Design system de Enterprise Agent Suite
+   Estilo Material Design 3 adaptado. Un solo lugar de verdad:
+   tokens (color, tipografía, espaciado, elevación, movimiento)
+   + componentes. Tema claro por defecto, oscuro con
+   [data-theme="dark"] o preferencia del sistema.
+   ============================================================ */
+
+/* ---------- Tokens ---------- */
+:root {
+  /* Color — tema claro */
+  --ds-plano: #f9f9f7;            /* fondo de página */
+  --ds-superficie: #fcfcfb;       /* tarjetas y paneles */
+  --ds-superficie-2: #f0efec;     /* chips, pistas, hover */
+  --ds-tinta: #0b0b0b;
+  --ds-tinta-2: #52514e;
+  --ds-tinta-suave: #898781;
+  --ds-borde: rgba(11, 11, 11, 0.10);
+  --ds-grilla: #e1e0d9;
+  --ds-eje: #c3c2b7;
+
+  --ds-primario: #2a78d6;         /* slot 1 de la paleta validada */
+  --ds-primario-tinta: #ffffff;
+  --ds-primario-suave: #cde2fb;
+  --ds-secundario: #eb6834;       /* slot 2 */
+
+  /* Estados del sistema (fijos, nunca se usan como serie) */
+  --ds-ok: #0ca30c;
+  --ds-advertencia: #fab219;
+  --ds-serio: #ec835a;
+  --ds-critico: #d03b3b;
+
+  /* Series de gráficos (paleta validada, modo claro) */
+  --ds-serie-1: #2a78d6;
+  --ds-serie-2: #eb6834;
+
+  /* Tipografía */
+  --ds-fuente: system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Forma y elevación */
+  --ds-radio: 12px;
+  --ds-radio-chip: 999px;
+  --ds-elev-1: 0 1px 2px rgba(0, 0, 0, .08), 0 1px 4px rgba(0, 0, 0, .06);
+  --ds-elev-2: 0 2px 6px rgba(0, 0, 0, .12), 0 4px 16px rgba(0, 0, 0, .10);
+
+  /* Movimiento (microinteracciones) */
+  --ds-dur-rapida: 120ms;
+  --ds-dur-media: 220ms;
+  --ds-dur-lenta: 360ms;
+  --ds-curva: cubic-bezier(.2, 0, 0, 1);
+}
+
+[data-theme="dark"] {
+  --ds-plano: #0d0d0d;
+  --ds-superficie: #1a1a19;
+  --ds-superficie-2: #262524;
+  --ds-tinta: #ffffff;
+  --ds-tinta-2: #c3c2b7;
+  --ds-tinta-suave: #898781;
+  --ds-borde: rgba(255, 255, 255, 0.10);
+  --ds-grilla: #2c2c2a;
+  --ds-eje: #383835;
+
+  --ds-primario: #3987e5;
+  --ds-primario-suave: #184f95;
+  --ds-secundario: #d95926;
+
+  --ds-serie-1: #3987e5;
+  --ds-serie-2: #d95926;
+
+  --ds-elev-1: 0 1px 2px rgba(0, 0, 0, .5);
+  --ds-elev-2: 0 4px 14px rgba(0, 0, 0, .55);
+}
+
+/* ---------- Base ---------- */
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--ds-plano); color: var(--ds-tinta);
+  font-family: var(--ds-fuente); font-size: 14.5px; line-height: 1.5;
+  transition: background var(--ds-dur-media) var(--ds-curva),
+              color var(--ds-dur-media) var(--ds-curva);
+}
+
+/* ---------- Barra de aplicación ---------- */
+.ds-appbar {
+  position: sticky; top: 0; z-index: 5;
+  display: flex; align-items: center; gap: .9rem;
+  padding: .65rem 1.2rem; background: var(--ds-superficie);
+  border-bottom: 1px solid var(--ds-borde); box-shadow: var(--ds-elev-1);
+}
+.ds-appbar h1 { margin: 0; font-size: 1.02rem; font-weight: 650; }
+.ds-appbar nav { display: flex; gap: .2rem; margin-left: .4rem; }
+.ds-appbar .ds-espacio { margin-left: auto; }
+.ds-appbar a.ds-tab {
+  color: var(--ds-tinta-2); text-decoration: none; font-size: .86rem;
+  padding: .35rem .7rem; border-radius: var(--ds-radio-chip);
+  transition: background var(--ds-dur-rapida) var(--ds-curva);
+}
+.ds-appbar a.ds-tab:hover { background: var(--ds-superficie-2); }
+.ds-appbar a.ds-tab.activa { background: var(--ds-primario-suave); color: var(--ds-tinta); }
+
+/* ---------- Botones (con ripple) ---------- */
+.ds-btn {
+  position: relative; overflow: hidden; border: none; cursor: pointer;
+  font: inherit; font-weight: 600; border-radius: var(--ds-radio-chip);
+  padding: .55rem 1.25rem; color: var(--ds-tinta);
+  background: var(--ds-superficie-2);
+  transition: box-shadow var(--ds-dur-rapida) var(--ds-curva),
+              transform var(--ds-dur-rapida) var(--ds-curva),
+              background var(--ds-dur-rapida) var(--ds-curva);
+}
+.ds-btn:hover { box-shadow: var(--ds-elev-1); }
+.ds-btn:active { transform: scale(.97); }
+.ds-btn:disabled { opacity: .5; cursor: progress; transform: none; box-shadow: none; }
+.ds-btn.primario { background: var(--ds-primario); color: var(--ds-primario-tinta); }
+.ds-btn.texto { background: transparent; }
+.ds-btn.peligro { background: transparent; color: var(--ds-critico); }
+.ds-btn .ds-ripple {
+  position: absolute; border-radius: 50%; pointer-events: none;
+  background: currentColor; opacity: .25; transform: scale(0);
+  animation: ds-ripple var(--ds-dur-lenta) var(--ds-curva) forwards;
+}
+@keyframes ds-ripple { to { transform: scale(2.6); opacity: 0; } }
+
+/* ---------- Campos de texto (etiqueta flotante) ---------- */
+.ds-campo { position: relative; margin-top: .6rem; }
+.ds-campo input, .ds-campo select {
+  width: 100%; font: inherit; color: var(--ds-tinta);
+  background: var(--ds-superficie); border: 1px solid var(--ds-eje);
+  border-radius: 8px; padding: .8rem .9rem .55rem;
+  transition: border-color var(--ds-dur-rapida) var(--ds-curva),
+              box-shadow var(--ds-dur-rapida) var(--ds-curva);
+}
+.ds-campo label {
+  position: absolute; left: .9rem; top: .68rem; color: var(--ds-tinta-suave);
+  pointer-events: none; font-size: .95rem; background: transparent;
+  transition: all var(--ds-dur-rapida) var(--ds-curva);
+}
+.ds-campo input:focus, .ds-campo select:focus {
+  outline: none; border-color: var(--ds-primario);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ds-primario) 25%, transparent);
+}
+.ds-campo input:focus + label, .ds-campo input:not(:placeholder-shown) + label,
+.ds-campo select:focus + label, .ds-campo.fija label {
+  top: -.55rem; font-size: .72rem; color: var(--ds-primario);
+  background: var(--ds-superficie); padding: 0 .3rem; border-radius: 4px;
+}
+.ds-campo.error input { border-color: var(--ds-critico); }
+.ds-campo.error + .ds-ayuda { color: var(--ds-critico); }
+.ds-ayuda { font-size: .76rem; color: var(--ds-tinta-suave); margin: .25rem 0 0 .3rem; }
+
+/* ---------- Tarjetas, chips, tablas ---------- */
+.ds-tarjeta {
+  background: var(--ds-superficie); border: 1px solid var(--ds-borde);
+  border-radius: var(--ds-radio); padding: 1.1rem 1.2rem; box-shadow: var(--ds-elev-1);
+  transition: box-shadow var(--ds-dur-media) var(--ds-curva);
+}
+.ds-tarjeta:hover { box-shadow: var(--ds-elev-2); }
+.ds-tarjeta h2 {
+  margin: 0 0 .8rem; font-size: .78rem; font-weight: 650; color: var(--ds-tinta-2);
+  text-transform: uppercase; letter-spacing: .05em;
+}
+.ds-chip {
+  display: inline-flex; align-items: center; gap: .35rem;
+  font-size: .74rem; font-weight: 650; padding: .18rem .6rem;
+  border-radius: var(--ds-radio-chip); border: 1px solid var(--ds-borde);
+  background: var(--ds-superficie-2); color: var(--ds-tinta-2);
+}
+.ds-chip.critica { color: var(--ds-critico); border-color: var(--ds-critico); background: transparent; }
+.ds-chip.seria { color: var(--ds-serio); border-color: var(--ds-serio); background: transparent; }
+.ds-chip.advertencia { color: color-mix(in srgb, var(--ds-advertencia) 75%, var(--ds-tinta));
+                       border-color: var(--ds-advertencia); background: transparent; }
+.ds-chip.ok { color: var(--ds-ok); border-color: var(--ds-ok); background: transparent; }
+.ds-tabla { width: 100%; border-collapse: collapse; }
+.ds-tabla th { text-align: left; font-size: .74rem; text-transform: uppercase;
+               letter-spacing: .05em; color: var(--ds-tinta-suave); padding: .5rem .6rem; }
+.ds-tabla td { padding: .55rem .6rem; border-top: 1px solid var(--ds-borde); }
+.ds-tabla tr { transition: background var(--ds-dur-rapida) var(--ds-curva); }
+.ds-tabla tbody tr:hover { background: var(--ds-superficie-2); }
+
+/* ---------- Estados del sistema ---------- */
+.ds-snackbar {
+  position: fixed; left: 50%; bottom: 1.4rem; transform: translate(-50%, 150%);
+  background: var(--ds-tinta); color: var(--ds-plano);
+  padding: .7rem 1.2rem; border-radius: 8px; box-shadow: var(--ds-elev-2);
+  font-size: .88rem; z-index: 50; max-width: min(92vw, 480px);
+  transition: transform var(--ds-dur-media) var(--ds-curva);
+}
+.ds-snackbar.visible { transform: translate(-50%, 0); }
+.ds-snackbar.error { background: var(--ds-critico); color: #fff; }
+.ds-snackbar.ok { background: var(--ds-ok); color: #fff; }
+
+.ds-estado { display: inline-flex; align-items: center; gap: .4rem;
+             font-size: .8rem; color: var(--ds-tinta-suave); }
+.ds-estado .punto { width: 8px; height: 8px; border-radius: 50%;
+                    background: var(--ds-ok); animation: ds-latido 2.4s infinite; }
+.ds-estado.caido .punto { background: var(--ds-critico); animation: none; }
+@keyframes ds-latido { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+
+/* Indicador de "escribiendo" (tres puntos) */
+.ds-escribiendo { display: inline-flex; gap: 5px; padding: .3rem 0; }
+.ds-escribiendo i { width: 7px; height: 7px; border-radius: 50%;
+                    background: var(--ds-tinta-suave); animation: ds-rebote 1.2s infinite; }
+.ds-escribiendo i:nth-child(2) { animation-delay: .15s; }
+.ds-escribiendo i:nth-child(3) { animation-delay: .3s; }
+@keyframes ds-rebote { 0%, 60%, 100% { transform: translateY(0); opacity: .4; }
+                       30% { transform: translateY(-5px); opacity: 1; } }
+
+/* Barra de progreso indeterminada */
+.ds-progreso { height: 3px; overflow: hidden; background: var(--ds-superficie-2);
+               border-radius: 2px; }
+.ds-progreso::after { content: ""; display: block; height: 100%; width: 35%;
+                      background: var(--ds-primario); border-radius: 2px;
+                      animation: ds-barrido 1.1s var(--ds-curva) infinite; }
+@keyframes ds-barrido { from { margin-left: -35%; } to { margin-left: 100%; } }
+
+/* Interruptor de tema */
+.ds-tema {
+  border: 1px solid var(--ds-borde); background: var(--ds-superficie-2);
+  border-radius: var(--ds-radio-chip); width: 56px; height: 30px; cursor: pointer;
+  position: relative; transition: background var(--ds-dur-media) var(--ds-curva);
+}
+.ds-tema::after {
+  content: "☀"; position: absolute; top: 2px; left: 2px; width: 24px; height: 24px;
+  display: grid; place-items: center; font-size: .8rem;
+  background: var(--ds-superficie); border-radius: 50%; box-shadow: var(--ds-elev-1);
+  transition: left var(--ds-dur-media) var(--ds-curva);
+}
+[data-theme="dark"] .ds-tema::after { content: "🌙"; left: 28px; }
+
+/* Aparición suave de elementos nuevos */
+.ds-aparece { animation: ds-aparece var(--ds-dur-media) var(--ds-curva); }
+@keyframes ds-aparece { from { opacity: 0; transform: translateY(6px); } }
+
+/* Accesibilidad: respetar reducción de movimiento */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

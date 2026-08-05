@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tablero — Enterprise Agent Suite</title>
+<link rel="stylesheet" href="/ds.css">
+<style>
+  main { max-width: 1180px; margin: 0 auto; padding: 1.2rem 1.4rem 3rem; display: grid; gap: 1rem; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
+  .kpi .valor { font-size: 1.7rem; font-weight: 650; margin-top: .1rem; }
+  .kpi .nota { color: var(--ds-tinta-suave); font-size: .78rem; margin-top: .2rem; }
+  .kpi.alerta .valor { color: var(--ds-critico); }
+  .fila { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 860px) { .fila { grid-template-columns: 1fr; } }
+  ul.alertas { list-style: none; margin: 0; padding: 0; display: grid; gap: .55rem; }
+  ul.alertas li { display: flex; gap: .7rem; align-items: flex-start; padding: .6rem .7rem;
+                  border: 1px solid var(--ds-borde); border-radius: 8px; }
+  .alertas b { display: block; font-size: .88rem; font-weight: 600; }
+  .alertas span.detalle { color: var(--ds-tinta-2); font-size: .8rem; }
+  svg text { font-family: inherit; }
+  .leyenda { display: flex; gap: 1.1rem; margin: .1rem 0 .6rem; font-size: .78rem;
+             color: var(--ds-tinta-2); }
+  .leyenda i { display: inline-block; width: 10px; height: 10px; border-radius: 2px;
+               margin-right: .35rem; }
+  #tooltip { position: fixed; pointer-events: none; background: var(--ds-tinta);
+             color: var(--ds-plano); border-radius: 6px; padding: .4rem .6rem;
+             font-size: .78rem; display: none; z-index: 10; max-width: 260px; }
+  #meta { color: var(--ds-tinta-suave); font-size: .8rem; }
+  #ds-usuario { display: flex; align-items: center; gap: .7rem; }
+</style>
+</head>
+<body>
+<header class="ds-appbar">
+  <h1>📈 Tablero de control</h1>
+  <nav></nav>
+  <span id="meta">cargando…</span>
+  <span class="ds-espacio"></span>
+  <span id="ds-usuario"></span>
+  <button class="ds-tema" onclick="alternarTema()" aria-label="cambiar tema"></button>
+  <button class="ds-btn texto" onclick="salir()">Salir</button>
+</header>
+<main>
+  <section class="kpis" id="kpis"></section>
+
+  <section class="ds-tarjeta">
+    <h2>Alertas tempranas</h2>
+    <ul class="alertas" id="alertas"></ul>
+  </section>
+
+  <div class="fila">
+    <section class="ds-tarjeta">
+      <h2>Ventas por mes (USD)</h2>
+      <div id="g-ventas"></div>
+    </section>
+    <section class="ds-tarjeta">
+      <h2>Deuda por cliente (USD)</h2>
+      <div class="leyenda">
+        <span><i style="background:var(--ds-serie-1)"></i>Pendiente</span>
+        <span><i style="background:var(--ds-serie-2)"></i>⚠ Vencida</span>
+      </div>
+      <div id="g-deuda"></div>
+    </section>
+  </div>
+
+  <section class="ds-tarjeta">
+    <h2>Consumo de horas por proyecto (%)</h2>
+    <div id="g-proyectos"></div>
+  </section>
+</main>
+<div id="tooltip"></div>
+<script src="/ds.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const fmt = n => n.toLocaleString("es-AR", {maximumFractionDigits: 0});
+const SVGNS = "http://www.w3.org/2000/svg";
+const tooltip = $("tooltip");
+
+montarAppbar("/tablero");
+
+function conTooltip(el, texto) {
+  el.addEventListener("mousemove", e => {
+    tooltip.textContent = texto;
+    tooltip.style.display = "block";
+    tooltip.style.left = Math.min(e.clientX + 12, innerWidth - 280) + "px";
+    tooltip.style.top = (e.clientY + 12) + "px";
+  });
+  el.addEventListener("mouseleave", () => tooltip.style.display = "none");
+}
+
+function svg(ancho, alto) {
+  const s = document.createElementNS(SVGNS, "svg");
+  s.setAttribute("viewBox", `0 0 ${ancho} ${alto}`);
+  s.style.width = "100%";
+  return s;
+}
+function rect(s, x, y, w, h, fill, radio = 0) {
+  const r = document.createElementNS(SVGNS, "rect");
+  r.setAttribute("x", x); r.setAttribute("y", y);
+  r.setAttribute("width", Math.max(w, 0)); r.setAttribute("height", Math.max(h, 0));
+  r.setAttribute("fill", fill);
+  if (radio) r.setAttribute("rx", radio);
+  s.appendChild(r); return r;
+}
+function texto(s, x, y, t, opts = {}) {
+  const e = document.createElementNS(SVGNS, "text");
+  e.setAttribute("x", x); e.setAttribute("y", y);
+  e.setAttribute("fill", opts.color || "var(--ds-tinta-suave)");
+  e.setAttribute("font-size", opts.tam || 11);
+  if (opts.ancla) e.setAttribute("text-anchor", opts.ancla);
+  if (opts.tab) e.setAttribute("font-variant-numeric", "tabular-nums");
+  e.textContent = t;
+  s.appendChild(e); return e;
+}
+
+function graficoVentas(datos) {
+  const W = 560, H = 220, m = {t: 14, r: 8, b: 26, l: 8};
+  const s = svg(W, H);
+  const max = Math.max(...datos.map(d => d.monto));
+  const anchoBarra = (W - m.l - m.r) / datos.length;
+  const iMax = datos.findIndex(d => d.monto === max);
+  datos.forEach((d, i) => {
+    const h = (d.monto / max) * (H - m.t - m.b);
+    const x = m.l + i * anchoBarra + 5, w = anchoBarra - 10;
+    const y = H - m.b - h;
+    rect(s, x, y, w, h, "var(--ds-serie-1)", 4);                       // extremo redondeado
+    rect(s, x, H - m.b - Math.min(4, h), w, Math.min(4, h), "var(--ds-serie-1)"); // base recta
+    texto(s, x + w / 2, H - 8, d.mes.slice(5), {ancla: "middle", tab: true});
+    if (i === iMax) texto(s, x + w / 2, y - 6, fmt(d.monto),
+                          {ancla: "middle", color: "var(--ds-tinta-2)"});
+    const zona = rect(s, m.l + i * anchoBarra, m.t, anchoBarra, H - m.t - m.b, "transparent");
+    conTooltip(zona, `${d.mes}: ${fmt(d.monto)} USD`);
+  });
+  rect(s, m.l, H - m.b, W - m.l - m.r, 1, "var(--ds-eje)");
+  $("g-ventas").replaceChildren(s);
+}
+
+function graficoDeuda(datos) {
+  const filaH = 30, m = {l: 118, r: 66}, W = 560;
+  const H = datos.length * filaH + 6;
+  const s = svg(W, H);
+  const max = Math.max(...datos.map(d => d.pendiente + d.vencida));
+  const escala = (W - m.l - m.r) / max;
+  datos.forEach((d, i) => {
+    const y = i * filaH + 6, h = filaH - 12;
+    const wP = d.pendiente * escala, wV = d.vencida * escala;
+    texto(s, m.l - 8, y + h - 2, d.cliente, {ancla: "end", color: "var(--ds-tinta-2)"});
+    const bP = rect(s, m.l, y, wP, h, "var(--ds-serie-1)");
+    const bV = rect(s, m.l + wP + (wP && wV ? 2 : 0), y, wV, h, "var(--ds-serie-2)", 4);
+    if (!wV) bP.setAttribute("rx", 4);
+    texto(s, m.l + wP + wV + 8, y + h - 2, fmt(d.pendiente + d.vencida), {tab: true});
+    conTooltip(bP, `${d.cliente} — pendiente: ${fmt(d.pendiente)} USD`);
+    conTooltip(bV, `${d.cliente} — vencida: ${fmt(d.vencida)} USD`);
+  });
+  $("g-deuda").replaceChildren(s);
+}
+
+function graficoProyectos(datos) {
+  const filaH = 30, m = {l: 205, r: 120}, W = 1120;
+  const H = datos.length * filaH + 6;
+  const s = svg(W, H);
+  const escala = (W - m.l - m.r) / 100;
+  datos.forEach((d, i) => {
+    const y = i * filaH + 6, h = filaH - 12;
+    texto(s, m.l - 8, y + h - 2, `${d.codigo} · ${d.nombre}`,
+          {ancla: "end", color: "var(--ds-tinta-2)"});
+    rect(s, m.l, y, 100 * escala, h, "var(--ds-grilla)");
+    rect(s, m.l + 90 * escala, y, 1.5, h, "var(--ds-eje)");
+    const color = d.alerta ? "var(--ds-critico)" : "var(--ds-serie-1)";
+    const b = rect(s, m.l, y, Math.min(d.pct, 100) * escala, h, color, 4);
+    texto(s, m.l + 100 * escala + 8, y + h - 2,
+          d.alerta ? `⚠ ${d.pct}%` : `${d.pct}%`,
+          {tab: true, color: d.alerta ? "var(--ds-critico)" : "var(--ds-tinta-suave)"});
+    conTooltip(b, `${d.codigo} ${d.nombre} (${d.cliente}): ${d.pct}% de las horas` +
+                  (d.alerta ? " — SOBRE EL UMBRAL DEL 90%" : ""));
+  });
+  $("g-proyectos").replaceChildren(s);
+}
+
+const ICONO = {critica: "⛔", seria: "⚠", advertencia: "🔔"};
+
+function kpi(titulo, valor, nota, esAlerta = false) {
+  return `<div class="ds-tarjeta kpi${esAlerta ? " alerta" : ""}">
+    <h2>${titulo}</h2><div class="valor">${valor}</div><div class="nota">${nota}</div></div>`;
+}
+
+async function cargar() {
+  let d;
+  try {
+    d = await pedir("/metricas");
+  } catch { return; }
+  $("meta").textContent =
+    `datos al ${d.generado} · actualizado ${new Date().toLocaleTimeString("es-AR")} · refresco 30 s`;
+
+  const k = d.kpis;
+  $("kpis").innerHTML =
+    kpi("Facturación total", fmt(k.facturacion_total), "USD, año en curso") +
+    kpi("Por cobrar", fmt(k.por_cobrar), "USD pendiente + vencido") +
+    kpi("Vencido", fmt(k.vencido), "USD a reclamar", k.vencido > 0) +
+    kpi("Proyectos en riesgo", k.proyectos_en_riesgo, "consumo > 90% de horas",
+        k.proyectos_en_riesgo > 0) +
+    kpi("Sin asignar", k.personas_sin_asignar, "personas disponibles");
+
+  $("alertas").innerHTML = d.alertas.length
+    ? d.alertas.map(a =>
+        `<li class="ds-aparece"><span class="ds-chip ${a.severidad}">${ICONO[a.severidad]}
+         ${a.severidad.toUpperCase()}</span>
+         <div><b>${a.titulo}</b><span class="detalle">${a.detalle}</span></div></li>`).join("")
+    : `<li><span class="ds-chip ok">✔ OK</span><div><b>Sin alertas activas</b></div></li>`;
+
+  graficoVentas(d.series.ventas_por_mes);
+  graficoDeuda(d.series.deuda_por_cliente);
+  graficoProyectos(d.series.consumo_proyectos);
+}
+
+cargar();
+setInterval(cargar, 30000);
+</script>
+</body>
+</html>

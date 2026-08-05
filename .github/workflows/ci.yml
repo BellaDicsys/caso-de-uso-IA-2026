@@ -26,8 +26,8 @@ jobs:
           ruff check .
           ruff format --check .
 
-      - name: Tests (pytest)
-        run: python -m pytest
+      - name: Tests + cobertura (pytest)
+        run: python -m pytest --cov --cov-fail-under=85
 
       - name: Demo offline (smoke test)
         run: python -m enterprise_agents demo

@@ -1,0 +1,22 @@
+{
+  "usuarios": [
+    {
+      "usuario": "admin",
+      "rol": "admin",
+      "salt": "6b42d7c7724a9966d5087b8b67feb0f3",
+      "hash": "eb53076c0135ba1221b479a1bd0a88bd4c8514c436905e0a4eeecafa9f80061a"
+    },
+    {
+      "usuario": "gestion",
+      "rol": "gestor",
+      "salt": "6d35f0ad97054ab7b6e30d9316f1d048",
+      "hash": "0fc4f62faf59cc3834452ffcd2cb217d62d89d5310c407f9107df3856278ed19"
+    },
+    {
+      "usuario": "consulta",
+      "rol": "consulta",
+      "salt": "47cd3a20d8e50e506b83bcd3dc1726a0",
+      "hash": "7aca8a583b87a65860e5353cbbd1e663d9f35c20d7a560d9b480a0937499bc8c"
+    }
+  ]
+}

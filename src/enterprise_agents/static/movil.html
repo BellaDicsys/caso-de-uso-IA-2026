@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Asistente — Enterprise Agent Suite</title>
+<link rel="stylesheet" href="/ds.css">
+<style>
+  /* Versión móvil: alcance reducido (solo chat) + entrada y salida por voz. */
+  body { display: flex; flex-direction: column; height: 100dvh; }
+  header.ds-appbar { padding: .55rem .9rem; }
+  header h1 { font-size: .95rem; }
+  main { flex: 1; overflow-y: auto; padding: .9rem .8rem; }
+  .msj { margin: .55rem 0; display: flex; }
+  .msj.usuario { justify-content: flex-end; }
+  .burbuja {
+    max-width: 90%; padding: .6rem .85rem; border-radius: var(--ds-radio);
+    white-space: pre-wrap; line-height: 1.4; font-size: .9rem;
+    border: 1px solid var(--ds-borde); background: var(--ds-superficie);
+  }
+  .usuario .burbuja { background: var(--ds-primario-suave); border-color: transparent; }
+  footer {
+    padding: .7rem .8rem calc(.7rem + env(safe-area-inset-bottom));
+    background: var(--ds-superficie); border-top: 1px solid var(--ds-borde);
+    display: flex; gap: .55rem; align-items: center;
+  }
+  footer .ds-campo { flex: 1; margin-top: 0; }
+  .mic {
+    position: relative; overflow: hidden;
+    width: 52px; height: 52px; border-radius: 50%; border: none; cursor: pointer;
+    font-size: 1.35rem; background: var(--ds-primario); color: #fff;
+    box-shadow: var(--ds-elev-1);
+    transition: transform var(--ds-dur-rapida) var(--ds-curva),
+                background var(--ds-dur-media) var(--ds-curva);
+  }
+  .mic:active { transform: scale(.94); }
+  .mic.grabando { background: var(--ds-critico); animation: ds-pulso 1.2s infinite; }
+  @keyframes ds-pulso {
+    0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ds-critico) 45%, transparent); }
+    60% { box-shadow: 0 0 0 14px transparent; }
+  }
+  .voz-off { display: none; font-size: .72rem; color: var(--ds-tinta-suave);
+             padding: .3rem .8rem; text-align: center; }
+</style>
+</head>
+<body>
+<header class="ds-appbar">
+  <h1>🧭 Asistente</h1>
+  <span class="ds-espacio"></span>
+  <button class="ds-btn texto" id="parlante" title="leer respuestas en voz alta">🔊</button>
+  <button class="ds-tema" onclick="alternarTema()" aria-label="cambiar tema"></button>
+  <a class="ds-tab" href="/" title="versión completa">🖥</a>
+</header>
+<main id="conversacion">
+  <div class="msj ds-aparece"><div class="burbuja">Hola 👋 Preguntame por ventas, cobranzas,
+documentos o el equipo. Tocá el micrófono para hablar.</div></div>
+</main>
+<div class="voz-off" id="voz-off">Tu navegador no soporta dictado por voz; usá el teclado.</div>
+<footer>
+  <div class="ds-campo">
+    <input id="entrada" placeholder=" " autocomplete="off">
+    <label for="entrada">Consulta…</label>
+  </div>
+  <button class="ds-btn primario" id="boton" title="enviar">➤</button>
+  <button class="mic" id="mic" title="hablar">🎙</button>
+</footer>
+<script src="/ds.js"></script>
+<script>
+  const conversacion = document.getElementById("conversacion");
+  const entrada = document.getElementById("entrada");
+  const boton = document.getElementById("boton");
+  const mic = document.getElementById("mic");
+  const parlante = document.getElementById("parlante");
+  let leerRespuestas = true;
+
+  function agregar(contenido, clase, esNodo = false) {
+    const fila = document.createElement("div");
+    fila.className = "msj ds-aparece " + clase;
+    const burbuja = document.createElement("div");
+    burbuja.className = "burbuja";
+    if (esNodo) burbuja.appendChild(contenido); else burbuja.textContent = contenido;
+    fila.appendChild(burbuja);
+    conversacion.appendChild(fila);
+    conversacion.scrollTop = conversacion.scrollHeight;
+    return burbuja;
+  }
+
+  /* --- Texto a voz (respuestas habladas) --- */
+  function hablar(texto) {
+    if (!leerRespuestas || !("speechSynthesis" in window)) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(texto.slice(0, 600));
+    u.lang = "es-AR";
+    speechSynthesis.speak(u);
+  }
+  parlante.addEventListener("click", () => {
+    leerRespuestas = !leerRespuestas;
+    parlante.textContent = leerRespuestas ? "🔊" : "🔇";
+    if (!leerRespuestas) speechSynthesis.cancel();
+    snackbar(leerRespuestas ? "Respuestas habladas activadas" : "Respuestas habladas silenciadas");
+  });
+
+  /* --- Voz a texto (dictado) --- */
+  const Reconocedor = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!Reconocedor) {
+    mic.style.display = "none";
+    document.getElementById("voz-off").style.display = "block";
+  } else {
+    const rec = new Reconocedor();
+    rec.lang = "es-AR";
+    rec.interimResults = true;
+    let grabando = false;
+    mic.addEventListener("click", () => grabando ? rec.stop() : rec.start());
+    rec.onstart = () => { grabando = true; mic.classList.add("grabando"); };
+    rec.onend = () => {
+      grabando = false; mic.classList.remove("grabando");
+      if (entrada.value.trim()) enviar();
+    };
+    rec.onresult = (e) => {
+      entrada.value = Array.from(e.results).map(r => r[0].transcript).join(" ");
+    };
+    rec.onerror = (e) => {
+      if (e.error === "not-allowed") snackbar("Permití el acceso al micrófono.", "error");
+    };
+  }
+
+  /* --- Envío --- */
+  async function enviar() {
+    const pregunta = entrada.value.trim();
+    if (!pregunta) return;
+    agregar(pregunta, "usuario");
+    entrada.value = "";
+    boton.disabled = true;
+    const puntos = document.createElement("span");
+    puntos.className = "ds-escribiendo";
+    puntos.innerHTML = "<i></i><i></i><i></i>";
+    const espera = agregar(puntos, "agente", true);
+    try {
+      const d = await pedir("/consultar", {method: "POST", body: JSON.stringify({pregunta})});
+      espera.textContent = d.respuesta;
+      hablar(d.respuesta);
+    } catch {
+      espera.textContent = "No se pudo obtener respuesta.";
+    } finally {
+      boton.disabled = false;
+    }
+  }
+  boton.addEventListener("click", enviar);
+  entrada.addEventListener("keydown", e => { if (e.key === "Enter") enviar(); });
+
+  pedir("/sesion").catch(() => {});  // redirige a /login si no hay sesión
+</script>
+</body>
+</html>

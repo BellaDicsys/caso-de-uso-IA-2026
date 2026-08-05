@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Usuarios — Enterprise Agent Suite</title>
+<link rel="stylesheet" href="/ds.css">
+<style>
+  main { max-width: 860px; margin: 0 auto; padding: 1.2rem 1rem 3rem; display: grid; gap: 1rem; }
+  form.alta { display: grid; grid-template-columns: 1fr 1fr 160px auto; gap: .8rem;
+              align-items: start; }
+  @media (max-width: 720px) { form.alta { grid-template-columns: 1fr; } }
+  .rol-chip.admin { color: var(--ds-critico); border-color: var(--ds-critico); }
+  .rol-chip.gestor { color: var(--ds-primario); border-color: var(--ds-primario); }
+  #ds-usuario { display: flex; align-items: center; gap: .7rem; }
+</style>
+</head>
+<body>
+<header class="ds-appbar">
+  <h1>👥 Usuarios y roles</h1>
+  <nav></nav>
+  <span class="ds-espacio"></span>
+  <span id="ds-usuario"></span>
+  <button class="ds-tema" onclick="alternarTema()" aria-label="cambiar tema"></button>
+  <button class="ds-btn texto" onclick="salir()">Salir</button>
+</header>
+<main>
+  <section class="ds-tarjeta">
+    <h2>Alta de usuario</h2>
+    <form class="alta" id="alta">
+      <div class="ds-campo">
+        <input id="nuevo-usuario" placeholder=" " autocomplete="off" required>
+        <label for="nuevo-usuario">Usuario</label>
+      </div>
+      <div class="ds-campo">
+        <input id="nueva-clave" type="password" placeholder=" " minlength="8" required>
+        <label for="nueva-clave">Clave (mín. 8)</label>
+      </div>
+      <div class="ds-campo fija">
+        <select id="nuevo-rol">
+          <option value="consulta">consulta</option>
+          <option value="gestor">gestor</option>
+          <option value="admin">admin</option>
+        </select>
+        <label for="nuevo-rol">Rol</label>
+      </div>
+      <button class="ds-btn primario" id="boton-alta" type="submit">Crear</button>
+    </form>
+    <div class="ds-ayuda">Roles: <b>consulta</b> = chat · <b>gestor</b> = chat + tablero ·
+      <b>admin</b> = todo + gestión de usuarios</div>
+  </section>
+
+  <section class="ds-tarjeta">
+    <h2>Usuarios activos</h2>
+    <table class="ds-tabla">
+      <thead><tr><th>Usuario</th><th>Rol</th><th></th></tr></thead>
+      <tbody id="lista"></tbody>
+    </table>
+  </section>
+</main>
+<script src="/ds.js"></script>
+<script>
+  let sesionActual = null;
+
+  async function cargar() {
+    const usuarios = await pedir("/usuarios/api").catch(() => []);
+    document.getElementById("lista").innerHTML = usuarios.map(u => `
+      <tr class="ds-aparece">
+        <td>${u.usuario}${sesionActual && u.usuario === sesionActual.usuario ? " <small>(vos)</small>" : ""}</td>
+        <td><span class="ds-chip rol-chip ${u.rol}">${u.rol}</span></td>
+        <td style="text-align:right">
+          ${sesionActual && u.usuario === sesionActual.usuario ? "" :
+            `<button class="ds-btn peligro" data-usuario="${u.usuario}">Eliminar</button>`}
+        </td>
+      </tr>`).join("");
+  }
+
+  document.getElementById("lista").addEventListener("click", async e => {
+    const b = e.target.closest("button[data-usuario]");
+    if (!b) return;
+    if (!confirm(`¿Eliminar al usuario "${b.dataset.usuario}"?`)) return;
+    b.disabled = true;
+    try {
+      await pedir(`/usuarios/api/${b.dataset.usuario}`, {method: "DELETE"});
+      snackbar(`Usuario ${b.dataset.usuario} eliminado`, "ok");
+      cargar();
+    } catch { b.disabled = false; }
+  });
+
+  document.getElementById("alta").addEventListener("submit", async e => {
+    e.preventDefault();
+    const boton = document.getElementById("boton-alta");
+    boton.disabled = true;
+    try {
+      const usuario = document.getElementById("nuevo-usuario").value.trim();
+      await pedir("/usuarios/api", {
+        method: "POST",
+        body: JSON.stringify({
+          usuario,
+          clave: document.getElementById("nueva-clave").value,
+          rol: document.getElementById("nuevo-rol").value,
+        }),
+      });
+      snackbar(`Usuario ${usuario} creado`, "ok");
+      e.target.reset();
+      cargar();
+    } catch {} finally { boton.disabled = false; }
+  });
+
+  montarAppbar("/usuarios").then(s => { sesionActual = s; cargar(); });
+</script>
+</body>
+</html>
