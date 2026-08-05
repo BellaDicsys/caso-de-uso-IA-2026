@@ -8,6 +8,16 @@ automáticamente desde los *Conventional Commits* (ver
 Las versiones anteriores a la puesta en marcha del versionado automático se
 reconstruyeron a partir del historial.
 
+## 0.4.0 — 2026-08-05
+
+### Nuevas funcionalidades
+
+- **versionado**: versionado automático desde Conventional Commits
+
+### Documentación
+
+- **changelog**: reconstruye el historial previo al versionado automático
+
 ## 0.3.0 — 2026-08-05
 
 ### Nuevas funcionalidades
