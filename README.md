@@ -101,8 +101,8 @@ versión dinámica y la API expone en `/docs`).
 
 | Commit | Efecto |
 |---|---|
-| `fix:` · `perf:` · `refactor:` · `revert:` | versión de parche (`0.3.0` → `0.3.1`) |
-| `feat:` | versión menor (`0.3.0` → `0.4.0`) |
+| `fix:` · `perf:` · `refactor:` · `revert:` | versión de parche (`1.2.3` → `1.2.4`) |
+| `feat:` | versión menor (`1.2.3` → `1.3.0`) |
 | `feat!:` o `BREAKING CHANGE:` en el cuerpo | versión mayor (menor mientras el proyecto sea `0.x`) |
 | `docs:` · `test:` · `ci:` · `build:` · `chore:` · `style:` | no publican versión |
 

@@ -100,7 +100,8 @@ Se documentan explícitamente porque un despliegue real debe resolverlos:
 
 ## 4. Resultado
 
-- **54 tests** (antes 49), con casos de regresión específicos para cada corrección
+- **54 tests** al cierre de la auditoría (antes 49; hoy 94 tras sumar el versionado
+  automático), con casos de regresión específicos para cada corrección
   de seguridad: bloqueo por intentos fallidos, atributos de la cookie, revocación
   de sesiones, validación del parámetro de fecha y aislamiento del rol `consulta`.
 - **Cobertura 94 %**, con umbral del 85 % exigido en CI.
