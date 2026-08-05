@@ -7,14 +7,6 @@
 <link rel="stylesheet" href="/ds.css">
 <style>
   main { max-width: 780px; width: 100%; margin: 0 auto; padding: 1.2rem 1rem 7.5rem; }
-  .msj { margin: .7rem 0; display: flex; }
-  .msj.usuario { justify-content: flex-end; }
-  .burbuja {
-    max-width: 88%; padding: .7rem 1rem; border-radius: var(--ds-radio);
-    white-space: pre-wrap; line-height: 1.45; font-size: .93rem;
-    border: 1px solid var(--ds-borde); background: var(--ds-superficie);
-  }
-  .usuario .burbuja { background: var(--ds-primario-suave); border-color: transparent; }
   .sugerencias { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0; }
   form.entrada {
     position: fixed; bottom: 0; left: 0; right: 0; background: var(--ds-superficie);
@@ -22,7 +14,6 @@
   }
   .fila { max-width: 780px; margin: 0 auto; display: flex; gap: .6rem; }
   .fila .ds-campo { flex: 1; margin-top: 0; }
-  #ds-usuario { display: flex; align-items: center; gap: .7rem; }
 </style>
 </head>
 <body>
@@ -31,7 +22,8 @@
   <nav></nav>
   <span class="ds-espacio"></span>
   <span id="ds-usuario"></span>
-  <a class="ds-tab" href="/movil" title="versión móvil con voz">📱</a>
+  <a class="ds-tab" href="/movil" aria-label="versión móvil con voz"
+     title="versión móvil con voz">📱</a>
   <button class="ds-tema" onclick="alternarTema()" aria-label="cambiar tema"></button>
   <button class="ds-btn texto" onclick="salir()">Salir</button>
 </header>
@@ -69,22 +61,13 @@ Puedo responder sobre <b>ventas y proyectos</b>, <b>cobranzas</b>, <b>documentac
   });
 
   function agregar(contenido, clase, esNodo = false) {
-    const fila = document.createElement("div");
-    fila.className = "msj ds-aparece " + clase;
-    const burbuja = document.createElement("div");
-    burbuja.className = "burbuja";
-    if (esNodo) burbuja.appendChild(contenido); else burbuja.textContent = contenido;
-    fila.appendChild(burbuja);
-    conversacion.appendChild(fila);
+    const {fila, burbuja} = agregarMensaje(conversacion, contenido, clase, esNodo);
     fila.scrollIntoView({behavior: "smooth", block: "end"});
     return burbuja;
   }
 
   function indicadorEscribiendo() {
-    const puntos = document.createElement("span");
-    puntos.className = "ds-escribiendo";
-    puntos.innerHTML = "<i></i><i></i><i></i>";
-    return agregar(puntos, "agente", true);
+    return agregar(nodoEscribiendo(), "agente", true);
   }
 
   formulario.addEventListener("submit", async e => {

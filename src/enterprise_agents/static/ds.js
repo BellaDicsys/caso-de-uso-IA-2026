@@ -15,6 +15,12 @@ function alternarTema() {
   document.dispatchEvent(new CustomEvent("eas-tema-cambiado"));
 }
 
+/* ---------- Escape de HTML (defensa en profundidad para innerHTML) ---------- */
+function esc(valor) {
+  return String(valor ?? "").replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+}
+
 /* ---------- Ripple (microinteracción de botones) ---------- */
 document.addEventListener("pointerdown", (e) => {
   const btn = e.target.closest(".ds-btn");
@@ -84,11 +90,31 @@ async function montarAppbar(activa) {
   }
   const info = document.getElementById("ds-usuario");
   if (info) info.innerHTML =
-    `<span class="ds-chip">${s.usuario} · ${s.rol}</span>` +
-    `<span class="ds-estado" title="estado del sistema"><span class="punto"></span>${s.modo}</span>`;
+    `<span class="ds-chip">${esc(s.usuario)} · ${esc(s.rol)}</span>` +
+    `<span class="ds-estado" title="estado del sistema"><span class="punto"></span>${esc(s.modo)}</span>`;
   return s;
 }
 
 function salir() {
   fetch("/salir", { method: "POST" }).then(() => location.href = "/login");
+}
+
+/* ---------- Componente de chat compartido (index.html y movil.html) ---------- */
+function agregarMensaje(contenedor, contenido, clase, esNodo = false) {
+  const fila = document.createElement("div");
+  fila.className = "msj ds-aparece " + clase;
+  const burbuja = document.createElement("div");
+  burbuja.className = "burbuja";
+  // textContent, nunca innerHTML: la respuesta del modelo no debe interpretarse como HTML.
+  if (esNodo) burbuja.appendChild(contenido); else burbuja.textContent = contenido;
+  fila.appendChild(burbuja);
+  contenedor.appendChild(fila);
+  return { fila, burbuja };
+}
+
+function nodoEscribiendo() {
+  const puntos = document.createElement("span");
+  puntos.className = "ds-escribiendo";
+  puntos.innerHTML = "<i></i><i></i><i></i>";
+  return puntos;
 }

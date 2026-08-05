@@ -14,16 +14,22 @@ Ejecución:
 
 from __future__ import annotations
 
+import os
+import sys
 from datetime import date
+from functools import lru_cache
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from pydantic import BaseModel, Field
 
+from enterprise_agents import __version__
 from enterprise_agents.auth import (
+    DURACION_SESION_SEG,
     ROLES_TABLERO,
     AlmacenSesiones,
+    ControlIntentos,
     crear_usuario,
     eliminar_usuario,
     listar_usuarios,
@@ -37,6 +43,14 @@ from enterprise_agents.orchestrator import crear_orquestador
 
 _STATIC = Path(__file__).parent / "static"
 _COOKIE = "sesion"
+# Cookie Secure salvo en desarrollo local (ENTERPRISE_AGENTS_INSEGURO=1).
+_COOKIE_SEGURA = os.getenv("ENTERPRISE_AGENTS_INSEGURO", "") != "1"
+
+
+@lru_cache(maxsize=16)
+def _pagina_html(archivo: str) -> str:
+    """Lee una página estática una sola vez (son inmutables en runtime)."""
+    return (_STATIC / archivo).read_text(encoding="utf-8")
 
 
 class Consulta(BaseModel):
@@ -71,11 +85,17 @@ def crear_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or load_settings()
     llm, modo = _crear_llm(settings)
     sesiones = AlmacenSesiones()
+    intentos = ControlIntentos()
+    # Los agentes son stateless: se construye un orquestador por rol una sola
+    # vez y se reusa entre requests (evita rearmarlo en cada consulta).
+    orquestadores = {
+        rol: crear_orquestador(llm, settings, rol) for rol in ("admin", "gestor", "consulta")
+    }
 
     app = FastAPI(
         title="Enterprise Agent Suite",
         description="Suite agéntica de gestión empresarial — chat, tablero y administración.",
-        version="0.3.0",
+        version=__version__,
     )
 
     # --- Helpers de autorización -------------------------------------------
@@ -98,7 +118,7 @@ def crear_app(settings: Settings | None = None) -> FastAPI:
             return RedirectResponse(f"/login?next={request.url.path}", status_code=303)
         if roles and sesion["rol"] not in roles:
             return RedirectResponse("/?error=sin-permiso", status_code=303)
-        return HTMLResponse((_STATIC / archivo).read_text(encoding="utf-8"))
+        return HTMLResponse(_pagina_html(archivo))
 
     # --- Recursos estáticos y salud ----------------------------------------
 
@@ -110,24 +130,52 @@ def crear_app(settings: Settings | None = None) -> FastAPI:
     def ds_js() -> FileResponse:
         return FileResponse(_STATIC / "ds.js", media_type="text/javascript")
 
+    @app.get("/favicon.ico", include_in_schema=False)
+    def favicon() -> Response:
+        # Favicon inline: evita un 404 en cada carga de página.
+        svg = (
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">'
+            '<text y="26" font-size="26">🧭</text></svg>'
+        )
+        return Response(svg, media_type="image/svg+xml")
+
     @app.get("/salud")
     def salud() -> dict[str, str]:
-        return {"estado": "ok", "modo": modo}
+        # Healthcheck público: no expone el modelo ni si hay API key configurada.
+        return {"estado": "ok"}
 
     # --- Autenticación ------------------------------------------------------
 
     @app.get("/login", response_class=HTMLResponse)
     def login() -> str:
-        return (_STATIC / "login.html").read_text(encoding="utf-8")
+        return _pagina_html("login.html")
 
     @app.post("/entrar")
-    def entrar(credenciales: Credenciales):
+    def entrar(request: Request, credenciales: Credenciales):
+        origen = request.client.host if request.client else "desconocido"
+        clave_intentos = f"{credenciales.usuario}|{origen}"
+        if intentos.bloqueado(clave_intentos):
+            raise HTTPException(
+                status_code=429,
+                detail="Demasiados intentos fallidos. Reintentá en unos minutos.",
+            )
+
         rol = verificar_credenciales(credenciales.usuario, credenciales.clave)
         if rol is None:
+            intentos.registrar_fallo(clave_intentos)
             raise HTTPException(status_code=401, detail="Usuario o clave incorrectos.")
+
+        intentos.limpiar(clave_intentos)
         token = sesiones.crear(credenciales.usuario, rol)
         respuesta = RedirectResponse("/", status_code=303)
-        respuesta.set_cookie(_COOKIE, token, httponly=True, samesite="lax", max_age=8 * 60 * 60)
+        respuesta.set_cookie(
+            _COOKIE,
+            token,
+            httponly=True,
+            samesite="lax",
+            secure=_COOKIE_SEGURA,
+            max_age=DURACION_SESION_SEG,
+        )
         return respuesta
 
     @app.post("/salir")
@@ -155,8 +203,9 @@ def crear_app(settings: Settings | None = None) -> FastAPI:
 
     @app.post("/consultar", response_model=Respuesta)
     def consultar(request: Request, consulta: Consulta) -> Respuesta:
-        _requerir(request)
-        orquestador = crear_orquestador(llm, settings)
+        sesion = _requerir(request)
+        # RBAC a nivel de herramienta: el rol define qué dominios puede consultar.
+        orquestador = orquestadores[sesion["rol"]]
         return Respuesta(respuesta=orquestador.run(consulta.pregunta), modo=modo)
 
     # --- Tablero ------------------------------------------------------------
@@ -168,7 +217,12 @@ def crear_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/metricas")
     def metricas(request: Request, hoy: str | None = None) -> dict:
         _requerir(request, ROLES_TABLERO)
-        referencia = date.fromisoformat(hoy) if hoy else None
+        try:
+            referencia = date.fromisoformat(hoy) if hoy else None
+        except ValueError as error:
+            raise HTTPException(
+                status_code=422, detail="Parámetro 'hoy' inválido: usar AAAA-MM-DD."
+            ) from error
         return calcular_metricas(referencia)
 
     # --- Gestión de usuarios (solo admin) ----------------------------------
@@ -200,6 +254,8 @@ def crear_app(settings: Settings | None = None) -> FastAPI:
             eliminar_usuario(usuario)
         except ValueError as error:
             raise HTTPException(status_code=400, detail=str(error)) from error
+        # Revocación efectiva: cerrar las sesiones activas del usuario eliminado.
+        sesiones.cerrar_de_usuario(usuario)
         return {"eliminado": usuario}
 
     # Referencia interna para tests (evita repetir el login en cada uno).
@@ -210,5 +266,17 @@ def crear_app(settings: Settings | None = None) -> FastAPI:
 def servir(host: str = "127.0.0.1", port: int = 8000) -> None:
     """Levanta el servidor (usado por `enterprise-agents serve`)."""
     import uvicorn
+
+    from enterprise_agents.auth import usuarios_con_clave_demo
+
+    demo = usuarios_con_clave_demo()
+    if demo:
+        print(
+            f"⚠  Usuarios con clave de demostración activa: {', '.join(demo)}.\n"
+            "   Están publicadas en el README: rotalas antes de exponer la app.",
+            file=sys.stderr,
+        )
+    if not _COOKIE_SEGURA:
+        print("⚠  Cookie de sesión sin Secure (modo desarrollo).", file=sys.stderr)
 
     uvicorn.run(crear_app(), host=host, port=port)

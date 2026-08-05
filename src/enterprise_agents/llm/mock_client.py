@@ -4,14 +4,18 @@ No llama a ningún servicio externo: elige herramientas por palabras clave y
 resume los resultados de forma determinística. Permite ejecutar la demo y la
 suite de tests sin una clave de API, y hace reproducible el flujo agéntico
 completo (selección de herramienta → ejecución → síntesis).
+
+Limitación conocida (ver ADR-0003): el mock ejecuta una sola delegación por
+consulta; las consultas que cruzan dominios solo las resuelve el modelo real
+(modo `--live`).
 """
 
 from __future__ import annotations
 
-import unicodedata
 from typing import Any
 
 from enterprise_agents.llm.base import LLMReply
+from enterprise_agents.text import coincide_palabra, coincide_prefijo, normalizar
 
 # Habilidades reconocidas en los datos de ejemplo, para inferir argumentos.
 _HABILIDADES_CONOCIDAS = [
@@ -31,60 +35,32 @@ _HABILIDADES_CONOCIDAS = [
     "scrum",
 ]
 
-# Palabras clave por herramienta. La selección funciona igual para las
-# herramientas de dominio y para las de delegación del orquestador.
+# Keywords por dominio, definidas una sola vez y reusadas por la herramienta de
+# delegación del orquestador y por las herramientas del especialista, para que
+# ambos niveles enruten igual.
+_KW_ANALITICA = ["venta", "factur", "ingreso", "proyecto"]
+_KW_FINANZAS = ["cobranza", "cobrar", "vencid", "deuda", "adeuda", "impaga"]
+_KW_DOCUMENTAL = ["politica", "vacacion", "documento", "contrato", "onboarding", "sla", "licencia"]
+_KW_PERSONAL = ["empleado", "personal", "habilidad", "perfil", "equipo", "disponib"]
+
+# Palabras clave por herramienta. Se comparan como PREFIJO DE PALABRA (no
+# subcadena libre): 'factur' cubre 'facturamos'/'facturación', pero 'sql' no
+# matchea dentro de 'postgresql' ni 'deuda' dentro de otra palabra.
 _KEYWORDS: dict[str, list[str]] = {
-    "delegar_analista_datos": ["venta", "factur", "ingreso", "monto", "proyecto", "avance"],
-    "delegar_analista_finanzas": [
-        "cobranza",
-        "cobrar",
-        "vencid",
-        "deuda",
-        "debe",
-        "mora",
-        "reclamar",
-    ],
-    "delegar_gestor_documental": [
-        "politic",
-        "vacacion",
-        "documento",
-        "contrato",
-        "onboarding",
-        "sla",
-        "licencia",
-    ],
-    "delegar_gestor_personal": [
-        "empleado",
-        "personal",
-        "habilidad",
-        "disponib",
-        "asignar",
-        "equipo",
-        "perfil",
-    ],
-    "resumen_ventas": ["venta", "factur", "ingreso", "monto", "cliente"],
+    "delegar_analista_datos": [*_KW_ANALITICA, "avance", "hora", "riesgo"],
+    "delegar_analista_finanzas": [*_KW_FINANZAS, "reclamar", "mora"],
+    "delegar_gestor_documental": _KW_DOCUMENTAL,
+    "delegar_gestor_personal": [*_KW_PERSONAL, "asignar", "asignacion"],
+    "resumen_ventas": ["venta", "factur", "ingreso", "cliente"],
     "avance_proyectos": ["proyecto", "avance", "hora", "riesgo", "estado"],
-    "estado_cobranzas": ["cobranza", "cobrar", "estado", "total"],
-    "facturas_vencidas": ["vencid", "mora", "reclamar", "antigua"],
-    "deuda_por_cliente": ["deuda", "debe", "cliente"],
-    "buscar_documentos": [
-        "politic",
-        "vacacion",
-        "documento",
-        "contrato",
-        "onboarding",
-        "sla",
-        "licencia",
-    ],
+    "estado_cobranzas": ["cobranza", "cobrar", "total"],
+    "facturas_vencidas": ["vencid", "mora", "reclamar", "antigua", "impaga"],
+    "deuda_por_cliente": ["deuda", "adeuda", "cliente"],
+    "buscar_documentos": _KW_DOCUMENTAL,
     "leer_documento": ["leer", "texto completo"],
     "buscar_por_habilidad": ["habilidad", "sabe", "perfil", *_HABILIDADES_CONOCIDAS],
     "disponibilidad_equipo": ["disponib", "asignar", "libre", "capacidad", "equipo"],
 }
-
-
-def _normalizar(texto: str) -> str:
-    texto = unicodedata.normalize("NFKD", texto.lower())
-    return "".join(c for c in texto if not unicodedata.combining(c))
 
 
 class MockLLMClient:
@@ -158,11 +134,11 @@ class MockLLMClient:
     def _elegir_herramienta(
         self, texto: str, tools: list[dict[str, Any]]
     ) -> tuple[str, dict[str, Any]] | None:
-        texto_norm = _normalizar(texto)
+        texto_norm = normalizar(texto)
         mejor: tuple[int, str] | None = None
         for tool in tools:
             nombre = tool["name"]
-            puntaje = sum(1 for kw in _KEYWORDS.get(nombre, []) if kw in texto_norm)
+            puntaje = sum(1 for kw in _KEYWORDS.get(nombre, []) if coincide_prefijo(kw, texto_norm))
             if puntaje > 0 and (mejor is None or puntaje > mejor[0]):
                 mejor = (puntaje, nombre)
         if mejor is None:
@@ -178,9 +154,12 @@ class MockLLMClient:
             return {"consulta": texto}
         if nombre == "buscar_por_habilidad":
             for habilidad in _HABILIDADES_CONOCIDAS:
-                if habilidad in texto_norm:
+                if coincide_palabra(habilidad, texto_norm):
                     return {"habilidad": habilidad}
-            return {"habilidad": "python"}
+            # Sin habilidad reconocida: usar la última palabra significativa en
+            # lugar de un default fijo, para no responder con un perfil ajeno.
+            palabras = [p for p in texto_norm.split() if len(p) >= 3]
+            return {"habilidad": palabras[-1] if palabras else texto.strip()}
         if nombre == "leer_documento":
             return {"nombre": "politica-vacaciones.md"}
         return {}

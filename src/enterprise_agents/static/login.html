@@ -85,7 +85,13 @@
       }
       if (!r.ok) throw new Error("HTTP " + r.status);
       snackbar("Sesión iniciada", "ok");
-      const destino = new URLSearchParams(location.search).get("next") || "/";
+      // Solo rutas internas: evita open redirect (?next=https://evil) y esquemas
+      // peligrosos (javascript:, data:).
+      const pedido = new URLSearchParams(location.search).get("next") || "/";
+      const destino =
+        pedido.startsWith("/") && !pedido.startsWith("//") && !pedido.includes(":")
+          ? pedido
+          : "/";
       location.href = destino;
     } catch (err) {
       snackbar("No se pudo conectar con el servidor.", "error");

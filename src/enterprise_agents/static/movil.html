@@ -11,14 +11,7 @@
   header.ds-appbar { padding: .55rem .9rem; }
   header h1 { font-size: .95rem; }
   main { flex: 1; overflow-y: auto; padding: .9rem .8rem; }
-  .msj { margin: .55rem 0; display: flex; }
-  .msj.usuario { justify-content: flex-end; }
-  .burbuja {
-    max-width: 90%; padding: .6rem .85rem; border-radius: var(--ds-radio);
-    white-space: pre-wrap; line-height: 1.4; font-size: .9rem;
-    border: 1px solid var(--ds-borde); background: var(--ds-superficie);
-  }
-  .usuario .burbuja { background: var(--ds-primario-suave); border-color: transparent; }
+  .burbuja { max-width: 90%; padding: .6rem .85rem; font-size: .9rem; }
   footer {
     padding: .7rem .8rem calc(.7rem + env(safe-area-inset-bottom));
     background: var(--ds-superficie); border-top: 1px solid var(--ds-borde);
@@ -47,9 +40,10 @@
 <header class="ds-appbar">
   <h1>🧭 Asistente</h1>
   <span class="ds-espacio"></span>
-  <button class="ds-btn texto" id="parlante" title="leer respuestas en voz alta">🔊</button>
+  <button class="ds-btn texto" id="parlante" aria-label="leer respuestas en voz alta"
+          title="leer respuestas en voz alta">🔊</button>
   <button class="ds-tema" onclick="alternarTema()" aria-label="cambiar tema"></button>
-  <a class="ds-tab" href="/" title="versión completa">🖥</a>
+  <a class="ds-tab" href="/" aria-label="versión de escritorio" title="versión completa">🖥</a>
 </header>
 <main id="conversacion">
   <div class="msj ds-aparece"><div class="burbuja">Hola 👋 Preguntame por ventas, cobranzas,
@@ -61,8 +55,8 @@ documentos o el equipo. Tocá el micrófono para hablar.</div></div>
     <input id="entrada" placeholder=" " autocomplete="off">
     <label for="entrada">Consulta…</label>
   </div>
-  <button class="ds-btn primario" id="boton" title="enviar">➤</button>
-  <button class="mic" id="mic" title="hablar">🎙</button>
+  <button class="ds-btn primario" id="boton" aria-label="enviar consulta" title="enviar">➤</button>
+  <button class="mic" id="mic" aria-label="dictar consulta por voz" title="hablar">🎙</button>
 </footer>
 <script src="/ds.js"></script>
 <script>
@@ -74,13 +68,7 @@ documentos o el equipo. Tocá el micrófono para hablar.</div></div>
   let leerRespuestas = true;
 
   function agregar(contenido, clase, esNodo = false) {
-    const fila = document.createElement("div");
-    fila.className = "msj ds-aparece " + clase;
-    const burbuja = document.createElement("div");
-    burbuja.className = "burbuja";
-    if (esNodo) burbuja.appendChild(contenido); else burbuja.textContent = contenido;
-    fila.appendChild(burbuja);
-    conversacion.appendChild(fila);
+    const {burbuja} = agregarMensaje(conversacion, contenido, clase, esNodo);
     conversacion.scrollTop = conversacion.scrollHeight;
     return burbuja;
   }
@@ -131,10 +119,7 @@ documentos o el equipo. Tocá el micrófono para hablar.</div></div>
     agregar(pregunta, "usuario");
     entrada.value = "";
     boton.disabled = true;
-    const puntos = document.createElement("span");
-    puntos.className = "ds-escribiendo";
-    puntos.innerHTML = "<i></i><i></i><i></i>";
-    const espera = agregar(puntos, "agente", true);
+    const espera = agregar(nodoEscribiendo(), "agente", true);
     try {
       const d = await pedir("/consultar", {method: "POST", body: JSON.stringify({pregunta})});
       espera.textContent = d.respuesta;

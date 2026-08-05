@@ -6,21 +6,9 @@ ejemplo vía API del HRIS) en lugar de un CSV local.
 
 from __future__ import annotations
 
-import csv
-import unicodedata
-
-from enterprise_agents.config import DATA_DIR
+from enterprise_agents.datos import leer_csv
+from enterprise_agents.text import coincide_palabra, normalizar
 from enterprise_agents.tools.base import ToolDef
-
-
-def _normalizar(texto: str) -> str:
-    texto = unicodedata.normalize("NFKD", texto.lower())
-    return "".join(c for c in texto if not unicodedata.combining(c))
-
-
-def _leer_empleados() -> list[dict[str, str]]:
-    with (DATA_DIR / "empleados.csv").open(newline="", encoding="utf-8") as archivo:
-        return list(csv.DictReader(archivo))
 
 
 def _formatear(filas: list[dict[str, str]]) -> str:
@@ -33,9 +21,12 @@ def _formatear(filas: list[dict[str, str]]) -> str:
 
 
 def buscar_por_habilidad(habilidad: str) -> str:
-    objetivo = _normalizar(habilidad)
+    # Match por palabra completa: 'SQL' no debe matchear 'PostgreSQL'.
+    objetivo = normalizar(habilidad)
     filas = [
-        f for f in _leer_empleados() if objetivo in _normalizar(f["habilidades"].replace(";", " "))
+        f
+        for f in leer_csv("empleados.csv")
+        if coincide_palabra(objetivo, normalizar(f["habilidades"].replace(";", " ")))
     ]
     if not filas:
         return f"Ningún perfil registra la habilidad '{habilidad}'."
@@ -44,7 +35,7 @@ def buscar_por_habilidad(habilidad: str) -> str:
 
 
 def disponibilidad_equipo(minimo_pct: int = 50) -> str:
-    filas = [f for f in _leer_empleados() if int(f["disponibilidad_pct"]) >= minimo_pct]
+    filas = [f for f in leer_csv("empleados.csv") if int(f["disponibilidad_pct"]) >= minimo_pct]
     if not filas:
         return f"Nadie tiene disponibilidad mayor o igual a {minimo_pct}%."
     filas.sort(key=lambda f: int(f["disponibilidad_pct"]), reverse=True)

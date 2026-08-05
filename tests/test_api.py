@@ -3,10 +3,11 @@
 from conftest import entrar
 
 
-def test_salud_es_publico(cliente):
+def test_salud_es_publico_y_no_filtra_el_modelo(cliente):
     respuesta = cliente.get("/salud")
     assert respuesta.status_code == 200
-    assert respuesta.json() == {"estado": "ok", "modo": "demo"}
+    # El healthcheck público no revela modo ni modelo (fingerprinting).
+    assert respuesta.json() == {"estado": "ok"}
 
 
 def test_paginas_protegidas_redirigen_a_login(cliente):
@@ -37,7 +38,7 @@ def test_movil_incluye_chat_de_voz(cliente):
 
 
 def test_consultar_devuelve_respuesta_del_orquestador(cliente):
-    entrar(cliente, "consulta")
+    entrar(cliente, "gestion")
     respuesta = cliente.post(
         "/consultar", json={"pregunta": "¿Qué facturas vencidas hay que reclamar?"}
     )
@@ -45,6 +46,27 @@ def test_consultar_devuelve_respuesta_del_orquestador(cliente):
     datos = respuesta.json()
     assert datos["modo"] == "demo"
     assert "FC-2026" in datos["respuesta"]
+
+
+def test_rol_consulta_no_accede_a_finanzas_ni_personal_por_el_chat(cliente):
+    """El chat no debe ser una vía alternativa a los datos que el tablero reserva."""
+    entrar(cliente, "consulta")
+
+    finanzas = cliente.post(
+        "/consultar", json={"pregunta": "¿Qué facturas vencidas hay que reclamar?"}
+    ).json()["respuesta"]
+    assert "FC-2026" not in finanzas
+
+    personal = cliente.post(
+        "/consultar", json={"pregunta": "¿Qué perfiles con Python tienen disponibilidad?"}
+    ).json()["respuesta"]
+    assert "Martina" not in personal
+
+    # Los dominios permitidos para ese rol sí responden.
+    ventas = cliente.post("/consultar", json={"pregunta": "¿Cuánto facturamos?"}).json()[
+        "respuesta"
+    ]
+    assert "USD" in ventas
 
 
 def test_consultar_valida_entrada(cliente):

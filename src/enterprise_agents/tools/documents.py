@@ -7,23 +7,18 @@ reemplaza por búsqueda semántica sobre el repositorio documental del cliente
 
 from __future__ import annotations
 
-import unicodedata
-
 from enterprise_agents.config import DOCS_DIR
+from enterprise_agents.text import normalizar
 from enterprise_agents.tools.base import ToolDef
 
 
-def _normalizar(texto: str) -> str:
-    texto = unicodedata.normalize("NFKD", texto.lower())
-    return "".join(c for c in texto if not unicodedata.combining(c))
-
-
 def buscar_documentos(consulta: str) -> str:
-    terminos = [t for t in _normalizar(consulta).split() if len(t) > 3]
+    # ≥ 3 conserva acrónimos como SLA/ERP/API sin caer en palabras vacías (de, el).
+    terminos = [t for t in normalizar(consulta).split() if len(t) >= 3]
     resultados = []
     for path in sorted(DOCS_DIR.glob("*.md")):
         texto = path.read_text(encoding="utf-8")
-        texto_norm = _normalizar(texto)
+        texto_norm = normalizar(texto)
         coincidencias = sum(texto_norm.count(t) for t in terminos)
         if coincidencias:
             primera_linea = texto.strip().splitlines()[0].lstrip("# ")

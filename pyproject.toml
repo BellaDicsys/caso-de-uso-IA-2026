@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "enterprise-agent-suite"
-version = "0.1.0"
-description = "Suite agéntica de gestión empresarial para Dicsys: analítica de datos, gestión documental y gestión de personal orquestadas por agentes de IA."
+version = "0.3.0"
+description = "Suite agéntica de gestión empresarial: analítica de datos, finanzas, gestión documental y gestión de personal orquestadas por agentes de IA, con API HTTP, tablero de alertas y versión móvil con voz."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Proprietary - Dicsys demo interno" }

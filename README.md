@@ -34,7 +34,7 @@ flowchart TD
 | Design system | propio (`ds.css` + `ds.js`) | tokens estilo Material 3, tema claro/oscuro, microinteracciones |
 | Tablero | SVG propio | KPIs + alertas tempranas + 3 gráficos, paleta validada para daltonismo |
 | Móvil | Web Speech API | chat de voz: dictado (SpeechRecognition) + respuesta hablada (speechSynthesis) |
-| Calidad | pytest + pytest-cov + ruff | 49 tests, cobertura 94% (umbral 85% en CI), lint y formato |
+| Calidad | pytest + pytest-cov + ruff | 54 tests, cobertura 94% (umbral 85% en CI), lint y formato |
 
 ## Superficies de uso
 
@@ -83,7 +83,7 @@ enterprise-agents ask --live "¿Cuánto facturamos a Banco Andino y quién puede
 ## Verificación
 
 ```bash
-python -m pytest --cov   # 49 tests + cobertura (94 %)
+python -m pytest --cov   # 54 tests + cobertura (94 %)
 ruff check .             # lint
 ruff format --check .    # formato
 ```
@@ -107,7 +107,7 @@ cobertura del 85 % y la demo offline como smoke test en cada push.
 │   ├── evals.py               # Set de evaluación de escenarios
 │   ├── cli.py                 # CLI: demo / ask / eval / serve
 │   └── static/                # DS propio (ds.css/ds.js) + páginas (chat, tablero, usuarios, móvil, login)
-└── tests/                     # Suite de tests (49, sin llamadas externas)
+└── tests/                     # Suite de tests (54, sin llamadas externas)
 ```
 
 ## Documentación
@@ -118,6 +118,7 @@ cobertura del 85 % y la demo offline como smoke test en cada push.
 | [docs/documento-funcional.md](docs/documento-funcional.md) | Documento funcional: requerimientos, casos de uso y **guía de prueba paso a paso** |
 | [docs/especificaciones-tecnicas.md](docs/especificaciones-tecnicas.md) | Especificaciones técnicas: stack, módulos, contratos, seguridad, testing |
 | [docs/arquitectura.md](docs/arquitectura.md) | Arquitectura multi-agente, flujo de una consulta, decisiones técnicas y evolución a producción |
+| [docs/auditoria-adversarial.md](docs/auditoria-adversarial.md) | **Auditoría adversarial**: hallazgos de seguridad, correctitud, calidad y rendimiento, con lo corregido y los riesgos aceptados |
 | [docs/casos-innovacion.md](docs/casos-innovacion.md) | Casos de innovación en gestión empresarial con IA agéntica que sirvieron de puntapié inicial |
 | [docs/guia-vibecoding.md](docs/guia-vibecoding.md) | Mejores prácticas de *vibecoding* / desarrollo asistido por IA aplicadas en este repositorio |
 | [docs/adr/](docs/adr/) | Registro de decisiones de arquitectura (ADRs) |
@@ -127,7 +128,8 @@ cobertura del 85 % y la demo offline como smoke test en cada push.
 
 Este repositorio es un **caso de uso demostrativo** (entrega sin deploy): los datos son
 sintéticos y las herramientas leen archivos locales. La autenticación usa un almacén
-local de usuarios con claves de demostración documentadas. La sección *"Camino a
+local de usuarios con claves de demostración documentadas (el servidor advierte
+al arrancar mientras sigan activas). La sección *"Camino a
 producción"* de [docs/arquitectura.md](docs/arquitectura.md) describe cómo cada
 componente se conecta a sistemas reales (data warehouse, repositorio documental, HRIS,
 directorio corporativo / SSO) sin cambiar la arquitectura.

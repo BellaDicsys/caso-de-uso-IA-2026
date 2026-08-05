@@ -6,20 +6,15 @@ facturación en lugar de un CSV local.
 
 from __future__ import annotations
 
-import csv
 from collections import defaultdict
 
-from enterprise_agents.config import DATA_DIR
+from enterprise_agents.datos import leer_csv
+from enterprise_agents.text import normalizar
 from enterprise_agents.tools.base import ToolDef
 
 
-def _leer_facturas() -> list[dict[str, str]]:
-    with (DATA_DIR / "facturas.csv").open(newline="", encoding="utf-8") as archivo:
-        return list(csv.DictReader(archivo))
-
-
 def estado_cobranzas() -> str:
-    filas = _leer_facturas()
+    filas = leer_csv("facturas.csv")
     por_estado: dict[str, float] = defaultdict(float)
     cantidad: dict[str, int] = defaultdict(int)
     for f in filas:
@@ -39,7 +34,7 @@ def estado_cobranzas() -> str:
 
 
 def facturas_vencidas() -> str:
-    vencidas = [f for f in _leer_facturas() if f["estado"] == "Vencida"]
+    vencidas = [f for f in leer_csv("facturas.csv") if f["estado"] == "Vencida"]
     if not vencidas:
         return "No hay facturas vencidas."
     vencidas.sort(key=lambda f: f["fecha_vencimiento"])
@@ -56,10 +51,11 @@ def facturas_vencidas() -> str:
 
 
 def deuda_por_cliente(cliente: str = "") -> str:
-    filas = [f for f in _leer_facturas() if f["estado"] in ("Pendiente", "Vencida")]
+    filas = [f for f in leer_csv("facturas.csv") if f["estado"] in ("Pendiente", "Vencida")]
     if cliente:
-        objetivo = cliente.strip().lower()
-        filas = [f for f in filas if objetivo in f["cliente"].lower()]
+        # Normalización unificada: mismo plegado de acentos que el resto de la suite.
+        objetivo = normalizar(cliente)
+        filas = [f for f in filas if objetivo in normalizar(f["cliente"])]
         if not filas:
             return f"El cliente '{cliente}' no tiene facturas pendientes ni vencidas."
 

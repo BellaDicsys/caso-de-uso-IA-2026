@@ -181,7 +181,8 @@ const ICONO = {critica: "⛔", seria: "⚠", advertencia: "🔔"};
 
 function kpi(titulo, valor, nota, esAlerta = false) {
   return `<div class="ds-tarjeta kpi${esAlerta ? " alerta" : ""}">
-    <h2>${titulo}</h2><div class="valor">${valor}</div><div class="nota">${nota}</div></div>`;
+    <h2>${esc(titulo)}</h2><div class="valor">${esc(valor)}</div>
+    <div class="nota">${esc(nota)}</div></div>`;
 }
 
 async function cargar() {
@@ -203,9 +204,9 @@ async function cargar() {
 
   $("alertas").innerHTML = d.alertas.length
     ? d.alertas.map(a =>
-        `<li class="ds-aparece"><span class="ds-chip ${a.severidad}">${ICONO[a.severidad]}
-         ${a.severidad.toUpperCase()}</span>
-         <div><b>${a.titulo}</b><span class="detalle">${a.detalle}</span></div></li>`).join("")
+        `<li class="ds-aparece"><span class="ds-chip ${esc(a.severidad)}">${ICONO[a.severidad] || ""}
+         ${esc(a.severidad.toUpperCase())}</span>
+         <div><b>${esc(a.titulo)}</b><span class="detalle">${esc(a.detalle)}</span></div></li>`).join("")
     : `<li><span class="ds-chip ok">✔ OK</span><div><b>Sin alertas activas</b></div></li>`;
 
   graficoVentas(d.series.ventas_por_mes);
@@ -213,8 +214,19 @@ async function cargar() {
   graficoProyectos(d.series.consumo_proyectos);
 }
 
-cargar();
-setInterval(cargar, 30000);
+// Refresco encadenado (no setInterval): evita solapar requests si el backend
+// se pone lento, y se pausa cuando la pestaña está oculta.
+let temporizador = null;
+function programarRefresco() {
+  clearTimeout(temporizador);
+  if (document.hidden) return;
+  temporizador = setTimeout(async () => { await cargar(); programarRefresco(); }, 30000);
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) clearTimeout(temporizador);
+  else cargar().then(programarRefresco);
+});
+cargar().then(programarRefresco);
 </script>
 </body>
 </html>

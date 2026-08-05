@@ -21,8 +21,12 @@ def usuarios_temporales(tmp_path, monkeypatch):
 
 @pytest.fixture
 def cliente(usuarios_temporales):
-    """TestClient de la app en modo mock (sin API key)."""
-    return TestClient(crear_app(Settings(api_key=None)))
+    """TestClient de la app en modo mock (sin API key).
+
+    Usa https como base porque la cookie de sesión es `Secure`: sobre http el
+    cliente no la reenviaría, igual que un navegador real.
+    """
+    return TestClient(crear_app(Settings(api_key=None)), base_url="https://testserver")
 
 
 def entrar(cliente: TestClient, usuario: str = "admin", clave: str | None = None) -> None:

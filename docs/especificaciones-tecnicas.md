@@ -14,7 +14,7 @@
 | SDK | `anthropic` (oficial) | ≥ 0.116.0 — única dependencia de runtime del núcleo |
 | API HTTP (opcional) | FastAPI + uvicorn | extra `[api]`; sirve REST + chat web |
 | Empaquetado | `pyproject.toml` (setuptools) | layout `src/`, consola `enterprise-agents` |
-| Testing | pytest | ≥ 8.0 — 26 tests, sin llamadas externas |
+| Testing | pytest + pytest-cov | ≥ 8.0 — 54 tests, cobertura 94 % (umbral 85 % en CI) |
 | Calidad de código | ruff (lint + formato) | reglas E, F, W, I, N, UP, B, SIM; línea 100 |
 | CI/CD | GitHub Actions | lint + tests + demo offline en cada push |
 
@@ -139,7 +139,7 @@ Plantilla en `.env.example`; `.env` está en `.gitignore`.
 | Unitarios de herramientas | `test_tools_analytics.py`, `test_tools_finance.py`, `test_tools_documents.py`, `test_tools_hr.py` | Cálculos, ordenamientos, umbrales, alertas de riesgo, path traversal, insensibilidad a mayúsculas |
 | Integración agéntica | `test_orchestrator.py`, `test_api.py`, `test_evals.py` | Flujo completo orquestador→especialista→herramienta→síntesis; propagación de errores como `tool_result`; corte por límite de iteraciones; consultas fuera de dominio |
 
-Ejecución: `python -m pytest` (26 tests, < 1 s, sin red). CI corre además
+Ejecución: `python -m pytest --cov` (54 tests, ~3 s, sin red). CI corre además
 `ruff check`, `ruff format --check` y `python -m enterprise_agents demo` como smoke
 test, en Python 3.10 y 3.12.
 

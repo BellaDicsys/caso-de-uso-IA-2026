@@ -14,6 +14,7 @@ from enterprise_agents.agents.specialists import (
     crear_gestor_documental,
     crear_gestor_personal,
 )
+from enterprise_agents.auth import ROLES_TABLERO
 from enterprise_agents.config import Settings
 from enterprise_agents.llm.base import LLMClient
 from enterprise_agents.tools.base import ToolDef
@@ -34,7 +35,8 @@ Coordinás un equipo de agentes especialistas y tu trabajo es:
    conclusión y citando los datos que aportó cada especialista.
 
 No inventes datos: todo lo fáctico debe salir de los especialistas. Si la
-consulta está fuera de estos dominios, decilo y sugerí a quién contactar.
+consulta está fuera de estos dominios —o requiere un dominio para el que no
+tenés herramienta de delegación disponible— decilo y sugerí a quién contactar.
 """
 
 
@@ -59,7 +61,14 @@ def _agente_como_herramienta(nombre: str, descripcion: str, agente: Agent) -> To
     )
 
 
-def crear_orquestador(llm: LLMClient, settings: Settings) -> Agent:
+def crear_orquestador(llm: LLMClient, settings: Settings, rol: str | None = None) -> Agent:
+    """Arma el orquestador con sus especialistas.
+
+    `rol` limita qué dominios puede consultar la sesión (RBAC a nivel de
+    herramienta): con rol `consulta` no se exponen finanzas ni personal, para
+    que el chat no sea una vía alternativa a los datos que el tablero reserva
+    a gestor/admin. `None` (CLI) habilita todos los dominios.
+    """
     analista = crear_analista_datos(llm, settings.max_iterations)
     finanzas = crear_analista_finanzas(llm, settings.max_iterations)
     documental = crear_gestor_documental(llm, settings.max_iterations)
@@ -73,24 +82,30 @@ def crear_orquestador(llm: LLMClient, settings: Settings) -> Agent:
             analista,
         ),
         _agente_como_herramienta(
-            "delegar_analista_finanzas",
-            "Delegá en el analista financiero consultas sobre cobranzas, cuentas "
-            "por cobrar, facturas vencidas, mora y deuda de clientes.",
-            finanzas,
-        ),
-        _agente_como_herramienta(
             "delegar_gestor_documental",
             "Delegá en el gestor documental consultas sobre políticas internas, "
             "manuales, contratos, SLA y procesos documentados.",
             documental,
         ),
-        _agente_como_herramienta(
-            "delegar_gestor_personal",
-            "Delegá en el gestor de personal consultas sobre perfiles, "
-            "habilidades, disponibilidad y asignación de equipos.",
-            personal,
-        ),
     ]
+
+    if rol is None or rol in ROLES_TABLERO:
+        herramientas.extend(
+            [
+                _agente_como_herramienta(
+                    "delegar_analista_finanzas",
+                    "Delegá en el analista financiero consultas sobre cobranzas, "
+                    "cuentas por cobrar, facturas vencidas, mora y deuda de clientes.",
+                    finanzas,
+                ),
+                _agente_como_herramienta(
+                    "delegar_gestor_personal",
+                    "Delegá en el gestor de personal consultas sobre perfiles, "
+                    "habilidades, disponibilidad y asignación de equipos.",
+                    personal,
+                ),
+            ]
+        )
 
     return Agent(
         name="orquestador",

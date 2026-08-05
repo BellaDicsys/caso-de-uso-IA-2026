@@ -14,7 +14,7 @@
   --ds-superficie-2: #f0efec;     /* chips, pistas, hover */
   --ds-tinta: #0b0b0b;
   --ds-tinta-2: #52514e;
-  --ds-tinta-suave: #898781;
+  --ds-tinta-suave: #6b6862;   /* ≥4.5:1 sobre superficie clara (WCAG AA) */
   --ds-borde: rgba(11, 11, 11, 0.10);
   --ds-grilla: #e1e0d9;
   --ds-eje: #c3c2b7;
@@ -236,3 +236,14 @@ body {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ---------- Chat (compartido por la vista de escritorio y la móvil) ---------- */
+.msj { margin: .7rem 0; display: flex; }
+.msj.usuario { justify-content: flex-end; }
+.burbuja {
+  max-width: 88%; padding: .7rem 1rem; border-radius: var(--ds-radio);
+  white-space: pre-wrap; line-height: 1.45; font-size: .93rem;
+  border: 1px solid var(--ds-borde); background: var(--ds-superficie);
+}
+.usuario .burbuja { background: var(--ds-primario-suave); border-color: transparent; }
+#ds-usuario { display: flex; align-items: center; gap: .7rem; }

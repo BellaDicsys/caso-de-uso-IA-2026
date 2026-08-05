@@ -7,21 +7,14 @@ por consultas al data warehouse del cliente (ver docs/arquitectura.md).
 
 from __future__ import annotations
 
-import csv
 from collections import defaultdict
-from pathlib import Path
 
-from enterprise_agents.config import DATA_DIR
+from enterprise_agents.datos import leer_csv
 from enterprise_agents.tools.base import ToolDef
 
 
-def _leer_csv(path: Path) -> list[dict[str, str]]:
-    with path.open(newline="", encoding="utf-8") as archivo:
-        return list(csv.DictReader(archivo))
-
-
 def resumen_ventas() -> str:
-    filas = _leer_csv(DATA_DIR / "ventas.csv")
+    filas = leer_csv("ventas.csv")
     total = sum(float(f["monto_usd"]) for f in filas)
 
     por_cliente: dict[str, float] = defaultdict(float)
@@ -47,7 +40,7 @@ def resumen_ventas() -> str:
 
 
 def avance_proyectos() -> str:
-    filas = _leer_csv(DATA_DIR / "proyectos.csv")
+    filas = leer_csv("proyectos.csv")
     lineas = []
     for fila in filas:
         presupuestadas = float(fila["horas_presupuestadas"])

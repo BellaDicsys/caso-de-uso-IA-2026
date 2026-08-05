@@ -26,6 +26,11 @@ python -m enterprise_agents eval            # set de evaluación (6 escenarios, 
 - **Capa LLM**: cualquier cambio en el bucle agéntico (`agents/base.py`) debe seguir
   funcionando con ambos clientes (`AnthropicLLMClient` y `MockLLMClient`). Los tests
   usan el mock; no agregar tests que llamen a la API real.
+- **Código compartido**: normalización de texto en `text.py` (`normalizar`,
+  `coincide_palabra`, `coincide_prefijo`) y lectura de CSV en `datos.leer_csv()`.
+  No reimplementar ninguno de los dos en un módulo nuevo.
+- **Frontend**: los estilos y utilidades comunes viven en `static/ds.css` y
+  `static/ds.js` (incluido `esc()` para escapar antes de cualquier `innerHTML`).
 - **Decisiones estructurales**: registrar en `docs/adr/` (formato de los existentes).
 - **Secretos**: solo por variables de entorno; `.env` está en `.gitignore`. Nunca
   commitear claves ni datos reales de clientes/empleados.
