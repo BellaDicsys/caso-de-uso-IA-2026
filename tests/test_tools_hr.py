@@ -1,6 +1,6 @@
 """Tests de las herramientas de personal."""
 
-from dicsys_agents.tools.hr import buscar_por_habilidad, disponibilidad_equipo
+from enterprise_agents.tools.hr import buscar_por_habilidad, disponibilidad_equipo
 
 
 def test_buscar_por_habilidad_ordena_por_disponibilidad():

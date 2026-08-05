@@ -12,7 +12,7 @@ Agent SDK (el harness completo de Claude Code como librería).
 
 - **SDK oficial `anthropic`** como única dependencia de runtime, llamando a la
   Messages API con *tool use*.
-- **Modelo `claude-opus-5`** por defecto (configurable vía `DICSYS_AGENTS_MODEL`),
+- **Modelo `claude-opus-5`** por defecto (configurable vía `ENTERPRISE_AGENTS_MODEL`),
   con razonamiento adaptativo activo por defecto (en Opus 5 no requiere parámetro).
 - **Bucle agéntico implementado en el proyecto** (`agents/base.py`) en lugar del
   tool runner beta del SDK.

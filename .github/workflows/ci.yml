@@ -30,4 +30,4 @@ jobs:
         run: python -m pytest
 
       - name: Demo offline (smoke test)
-        run: python -m dicsys_agents demo
+        run: python -m enterprise_agents demo

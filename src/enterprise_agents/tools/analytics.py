@@ -11,8 +11,8 @@ import csv
 from collections import defaultdict
 from pathlib import Path
 
-from dicsys_agents.config import DATA_DIR
-from dicsys_agents.tools.base import ToolDef
+from enterprise_agents.config import DATA_DIR
+from enterprise_agents.tools.base import ToolDef
 
 
 def _leer_csv(path: Path) -> list[dict[str, str]]:

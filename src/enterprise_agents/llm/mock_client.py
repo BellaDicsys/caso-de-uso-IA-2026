@@ -11,7 +11,7 @@ from __future__ import annotations
 import unicodedata
 from typing import Any
 
-from dicsys_agents.llm.base import LLMReply
+from enterprise_agents.llm.base import LLMReply
 
 # Habilidades reconocidas en los datos de ejemplo, para inferir argumentos.
 _HABILIDADES_CONOCIDAS = [
@@ -35,6 +35,15 @@ _HABILIDADES_CONOCIDAS = [
 # herramientas de dominio y para las de delegación del orquestador.
 _KEYWORDS: dict[str, list[str]] = {
     "delegar_analista_datos": ["venta", "factur", "ingreso", "monto", "proyecto", "avance"],
+    "delegar_analista_finanzas": [
+        "cobranza",
+        "cobrar",
+        "vencid",
+        "deuda",
+        "debe",
+        "mora",
+        "reclamar",
+    ],
     "delegar_gestor_documental": [
         "politic",
         "vacacion",
@@ -55,6 +64,9 @@ _KEYWORDS: dict[str, list[str]] = {
     ],
     "resumen_ventas": ["venta", "factur", "ingreso", "monto", "cliente"],
     "avance_proyectos": ["proyecto", "avance", "hora", "riesgo", "estado"],
+    "estado_cobranzas": ["cobranza", "cobrar", "estado", "total"],
+    "facturas_vencidas": ["vencid", "mora", "reclamar", "antigua"],
+    "deuda_por_cliente": ["deuda", "debe", "cliente"],
     "buscar_documentos": [
         "politic",
         "vacacion",
@@ -108,8 +120,8 @@ class MockLLMClient:
                         "type": "text",
                         "text": (
                             "(modo demo) No identifiqué un dominio para esta consulta. "
-                            "Probá preguntar por ventas, proyectos, documentos internos "
-                            "o disponibilidad del equipo."
+                            "Probá preguntar por ventas, proyectos, cobranzas, documentos "
+                            "internos o disponibilidad del equipo."
                         ),
                     }
                 ],

@@ -9,8 +9,8 @@ from __future__ import annotations
 import csv
 import unicodedata
 
-from dicsys_agents.config import DATA_DIR
-from dicsys_agents.tools.base import ToolDef
+from enterprise_agents.config import DATA_DIR
+from enterprise_agents.tools.base import ToolDef
 
 
 def _normalizar(texto: str) -> str:

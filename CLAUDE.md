@@ -1,8 +1,9 @@
 # Contexto para agentes de código
 
-Suite agéntica de gestión empresarial de Dicsys (demo, sin deploy). Un orquestador
-delega en tres especialistas (analítica, documental, personal) que ejecutan
-herramientas sobre datos de ejemplo en `data/`.
+Suite agéntica de gestión empresarial (demo, sin deploy). Un orquestador delega
+en cuatro especialistas (analítica, finanzas, documental, personal) que ejecutan
+herramientas sobre datos de ejemplo en `data/`. Interfaces: CLI, API HTTP
+(FastAPI) y chat web.
 
 ## Comandos
 
@@ -10,7 +11,8 @@ herramientas sobre datos de ejemplo en `data/`.
 pip install -e ".[dev]"   # instalación
 python -m pytest          # tests (deben pasar siempre; no requieren red ni API key)
 ruff check . && ruff format --check .   # lint y formato (CI los exige)
-python -m dicsys_agents demo            # smoke test offline
+python -m enterprise_agents demo            # smoke test offline
+python -m enterprise_agents eval            # set de evaluación (6 escenarios, mock)
 ```
 
 ## Convenciones
@@ -18,7 +20,7 @@ python -m dicsys_agents demo            # smoke test offline
 - **Idioma**: código con nombres en español para el dominio (herramientas, agentes),
   documentación y mensajes al usuario en español.
 - **Arquitectura**: el modelo decide, el código ejecuta. Toda lógica de datos vive en
-  `src/dicsys_agents/tools/` como funciones puras testeables; los agentes solo
+  `src/enterprise_agents/tools/` como funciones puras testeables; los agentes solo
   orquestan. No darle al modelo acceso directo a filesystem/datos sin una función
   intermedia que valide argumentos.
 - **Capa LLM**: cualquier cambio en el bucle agéntico (`agents/base.py`) debe seguir
@@ -36,3 +38,5 @@ python -m dicsys_agents demo            # smoke test offline
 3. Sumarlo al orquestador en `orchestrator.py` como herramienta `delegar_*`.
 4. Agregar keywords del dominio en `llm/mock_client.py` para que la demo offline
    lo cubra, y tests en `tests/`.
+5. Sumar un escenario del dominio en `evals.py` (el test `test_evals` exige que
+   todos los escenarios pasen en mock).

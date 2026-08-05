@@ -1,0 +1,16 @@
+numero,cliente,fecha_emision,fecha_vencimiento,monto_usd,estado
+FC-2026-0101,Banco Andino,2026-02-28,2026-03-30,54000,Pagada
+FC-2026-0102,Retail Sur,2026-03-31,2026-04-30,18500,Pagada
+FC-2026-0103,AgroExport SA,2026-03-31,2026-04-30,27500,Pagada
+FC-2026-0104,Salud Integral,2026-04-30,2026-05-30,15800,Pagada
+FC-2026-0105,Energia Norte,2026-04-30,2026-05-30,22400,Pagada
+FC-2026-0106,Banco Andino,2026-05-31,2026-06-30,38000,Pagada
+FC-2026-0107,Retail Sur,2026-05-31,2026-06-30,31000,Pendiente
+FC-2026-0108,AgroExport SA,2026-06-30,2026-07-30,9800,Vencida
+FC-2026-0109,Salud Integral,2026-06-30,2026-07-30,26400,Vencida
+FC-2026-0110,Energia Norte,2026-06-30,2026-07-30,17300,Pendiente
+FC-2026-0111,Logistica Austral,2026-06-30,2026-07-30,19700,Pagada
+FC-2026-0112,Banco Andino,2026-07-31,2026-08-30,45500,Pendiente
+FC-2026-0113,Retail Sur,2026-07-31,2026-08-30,21000,Pendiente
+FC-2026-0114,Logistica Austral,2026-07-31,2026-08-30,24600,Pendiente
+FC-2026-0115,Salud Integral,2026-05-31,2026-06-30,11500,Vencida

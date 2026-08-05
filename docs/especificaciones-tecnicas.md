@@ -1,6 +1,6 @@
-# Especificaciones técnicas — Dicsys Agent Suite
+# Especificaciones técnicas — Enterprise Agent Suite
 
-**Versión:** 1.0 — Agosto 2026
+**Versión:** 1.1 — Agosto 2026
 **Proyecto:** Caso de uso IA 2026 — Suite agéntica de gestión empresarial
 
 ---
@@ -11,9 +11,10 @@
 |---|---|---|
 | Lenguaje | Python | ≥ 3.10 (probado en 3.10 y 3.12 en CI) |
 | Modelo de IA | Claude (Anthropic) | `claude-opus-5` por defecto, configurable |
-| SDK | `anthropic` (oficial) | ≥ 0.116.0 — única dependencia de runtime |
-| Empaquetado | `pyproject.toml` (setuptools) | layout `src/`, consola `dicsys-agents` |
-| Testing | pytest | ≥ 8.0 — 16 tests, sin llamadas externas |
+| SDK | `anthropic` (oficial) | ≥ 0.116.0 — única dependencia de runtime del núcleo |
+| API HTTP (opcional) | FastAPI + uvicorn | extra `[api]`; sirve REST + chat web |
+| Empaquetado | `pyproject.toml` (setuptools) | layout `src/`, consola `enterprise-agents` |
+| Testing | pytest | ≥ 8.0 — 26 tests, sin llamadas externas |
 | Calidad de código | ruff (lint + formato) | reglas E, F, W, I, N, UP, B, SIM; línea 100 |
 | CI/CD | GitHub Actions | lint + tests + demo offline en cada push |
 
@@ -24,16 +25,20 @@ orquestación se implementa directamente sobre la Messages API con *tool use*
 ## 2. Arquitectura de módulos
 
 ```
-src/dicsys_agents/
+src/enterprise_agents/
 ├── config.py            # Settings (env vars), rutas de datos, modelo default
-├── cli.py               # Entrada CLI: comandos demo / ask, modo live/mock
+├── cli.py               # Entrada CLI: demo / ask / eval / serve
+├── api.py               # API HTTP (FastAPI): POST /consultar, GET /salud, chat web
+├── evals.py             # Set de evaluación: 6 escenarios con criterios verificables
+├── static/index.html    # Interfaz de chat web (autocontenida, sin dependencias)
 ├── orchestrator.py      # crear_orquestador(): agente coordinador
 ├── agents/
 │   ├── base.py          # class Agent: bucle agéntico común (≈80 líneas)
-│   └── specialists.py   # Fábricas de los 3 especialistas + system prompts
+│   └── specialists.py   # Fábricas de los 4 especialistas + system prompts
 ├── tools/
 │   ├── base.py          # ToolDef: esquema JSON + handler ejecutable
 │   ├── analytics.py     # resumen_ventas(), avance_proyectos()
+│   ├── finance.py       # estado_cobranzas(), facturas_vencidas(), deuda_por_cliente()
 │   ├── documents.py     # buscar_documentos(), leer_documento()
 │   └── hr.py            # buscar_por_habilidad(), disponibilidad_equipo()
 └── llm/
@@ -110,8 +115,8 @@ Simulación determinística para demo offline y tests:
 | Variable de entorno | Default | Efecto |
 |---|---|---|
 | `ANTHROPIC_API_KEY` | (vacía) | Si está definida → modo live; si no → modo mock |
-| `DICSYS_AGENTS_MODEL` | `claude-opus-5` | Modelo a usar en modo live |
-| `DICSYS_AGENTS_MAX_ITERATIONS` | `8` | Tope de iteraciones del bucle por consulta |
+| `ENTERPRISE_AGENTS_MODEL` | `claude-opus-5` | Modelo a usar en modo live |
+| `ENTERPRISE_AGENTS_MAX_ITERATIONS` | `8` | Tope de iteraciones del bucle por consulta |
 
 Plantilla en `.env.example`; `.env` está en `.gitignore`.
 
@@ -131,11 +136,11 @@ Plantilla en `.env.example`; `.env` está en `.gitignore`.
 
 | Suite | Archivos | Qué verifica |
 |---|---|---|
-| Unitarios de herramientas | `test_tools_analytics.py`, `test_tools_documents.py`, `test_tools_hr.py` | Cálculos, ordenamientos, umbrales, alertas de riesgo, path traversal, insensibilidad a mayúsculas |
-| Integración agéntica | `test_orchestrator.py` | Flujo completo orquestador→especialista→herramienta→síntesis; propagación de errores como `tool_result`; corte por límite de iteraciones; consultas fuera de dominio |
+| Unitarios de herramientas | `test_tools_analytics.py`, `test_tools_finance.py`, `test_tools_documents.py`, `test_tools_hr.py` | Cálculos, ordenamientos, umbrales, alertas de riesgo, path traversal, insensibilidad a mayúsculas |
+| Integración agéntica | `test_orchestrator.py`, `test_api.py`, `test_evals.py` | Flujo completo orquestador→especialista→herramienta→síntesis; propagación de errores como `tool_result`; corte por límite de iteraciones; consultas fuera de dominio |
 
-Ejecución: `python -m pytest` (16 tests, < 1 s, sin red). CI corre además
-`ruff check`, `ruff format --check` y `python -m dicsys_agents demo` como smoke
+Ejecución: `python -m pytest` (26 tests, < 1 s, sin red). CI corre además
+`ruff check`, `ruff format --check` y `python -m enterprise_agents demo` como smoke
 test, en Python 3.10 y 3.12.
 
 ## 6. Rendimiento y costos (modo live)

@@ -6,15 +6,17 @@ construir soluciones de IA aplicadas a sus dominios de negocio: **analítica de 
 
 Un agente **orquestador** recibe consultas en lenguaje natural, las delega en agentes
 **especialistas** (cada uno con sus propias herramientas sobre los datos de la empresa)
-y sintetiza una única respuesta.
+y sintetiza una única respuesta. Se usa por **CLI** o por **chat web** (API HTTP).
 
 ```mermaid
 flowchart TD
     U["Usuario\n(consulta en lenguaje natural)"] --> O["🧭 Orquestador\n(Claude + tool use)"]
     O -->|delegar_analista_datos| A["📊 Analista de Datos"]
+    O -->|delegar_analista_finanzas| F["💰 Analista Financiero"]
     O -->|delegar_gestor_documental| D["📄 Gestor Documental"]
     O -->|delegar_gestor_personal| P["👥 Gestor de Personal"]
     A --> A1["resumen_ventas\navance_proyectos"] --> DA[("data/ventas.csv\ndata/proyectos.csv")]
+    F --> F1["estado_cobranzas\nfacturas_vencidas\ndeuda_por_cliente"] --> DF[("data/facturas.csv")]
     D --> D1["buscar_documentos\nleer_documento"] --> DD[("data/documentos/*.md")]
     P --> P1["buscar_por_habilidad\ndisponibilidad_equipo"] --> DP[("data/empleados.csv")]
 ```
@@ -28,14 +30,20 @@ externas) con el mismo flujo agéntico completo.
 ```bash
 pip install -e ".[dev]"
 
-# Demo con los 4 escenarios de negocio
-dicsys-agents demo
+# Demo con los 5 escenarios de negocio
+enterprise-agents demo
 
 # Consulta libre
-dicsys-agents ask "¿Qué proyectos están en riesgo?"
+enterprise-agents ask "¿Qué facturas vencidas hay que reclamar?"
 
 # Con -v se ven las delegaciones y llamadas a herramientas
-dicsys-agents -v ask "Armá un equipo con Python"
+enterprise-agents -v ask "Armá un equipo con Python"
+
+# Chat web + API HTTP en http://localhost:8000
+enterprise-agents serve
+
+# Set de evaluación (6 escenarios con criterios verificables)
+enterprise-agents eval
 ```
 
 Para usar el modelo real (Claude):
@@ -43,13 +51,13 @@ Para usar el modelo real (Claude):
 ```bash
 cp .env.example .env       # completar ANTHROPIC_API_KEY
 export ANTHROPIC_API_KEY=sk-ant-...
-dicsys-agents ask --live "¿Cuánto facturamos a Banco Andino y quién puede tomar su próximo proyecto?"
+enterprise-agents ask --live "¿Cuánto facturamos a Banco Andino y quién puede tomar su próximo proyecto?"
 ```
 
 ## Verificación
 
 ```bash
-python -m pytest      # 16 tests (herramientas + bucle agéntico end-to-end)
+python -m pytest      # 26 tests (herramientas + bucle agéntico + API + evaluación)
 ruff check .          # lint
 ruff format --check . # formato
 ```
@@ -66,12 +74,14 @@ como smoke test en cada push.
 │   ├── casos-innovacion.md    # Investigación: casos de innovación que fundamentan el proyecto
 │   ├── guia-vibecoding.md     # Prácticas de desarrollo asistido por IA usadas aquí
 │   └── adr/                   # Decisiones de arquitectura (ADRs)
-├── src/dicsys_agents/
+├── src/enterprise_agents/
 │   ├── orchestrator.py        # Orquestador (patrón agente-como-herramienta)
-│   ├── agents/                # Bucle agéntico + especialistas
-│   ├── tools/                 # Herramientas de dominio (analítica, documentos, personal)
+│   ├── agents/                # Bucle agéntico + 4 especialistas
+│   ├── tools/                 # Herramientas de dominio (analítica, finanzas, documentos, personal)
 │   ├── llm/                   # Capa LLM: cliente Anthropic + cliente mock
-│   └── cli.py                 # Interfaz de línea de comandos
+│   ├── api.py                 # API HTTP (FastAPI) + chat web (static/index.html)
+│   ├── evals.py               # Set de evaluación de escenarios
+│   └── cli.py                 # CLI: demo / ask / eval / serve
 └── tests/                     # Suite de tests (sin llamadas externas)
 ```
 

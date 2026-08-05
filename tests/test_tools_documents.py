@@ -1,6 +1,6 @@
 """Tests de las herramientas documentales."""
 
-from dicsys_agents.tools.documents import buscar_documentos, leer_documento
+from enterprise_agents.tools.documents import buscar_documentos, leer_documento
 
 
 def test_buscar_documentos_encuentra_politica_de_vacaciones():

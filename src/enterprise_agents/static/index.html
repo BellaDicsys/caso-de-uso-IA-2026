@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Enterprise Agent Suite</title>
+<style>
+  :root {
+    --fondo: #f5f3ee; --panel: #ffffff; --tinta: #262524; --tinta-suave: #6b6862;
+    --acento: #b4552d; --acento-suave: #f3e2d8; --borde: #e3ded4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fondo: #1d1c1a; --panel: #262524; --tinta: #ece9e2; --tinta-suave: #a29d93;
+      --acento: #d97a4d; --acento-suave: #3a2c24; --borde: #3a3833;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: Georgia, "Times New Roman", serif; background: var(--fondo);
+    color: var(--tinta); display: flex; flex-direction: column; min-height: 100vh;
+  }
+  header {
+    padding: 1.1rem 1.5rem; border-bottom: 1px solid var(--borde); background: var(--panel);
+    display: flex; align-items: baseline; gap: .8rem; flex-wrap: wrap;
+  }
+  header h1 { margin: 0; font-size: 1.15rem; font-weight: 600; }
+  header .modo { font-size: .8rem; color: var(--tinta-suave); font-style: italic; }
+  main { flex: 1; max-width: 780px; width: 100%; margin: 0 auto; padding: 1.2rem 1rem 7rem; }
+  .msj { margin: .7rem 0; display: flex; }
+  .msj.usuario { justify-content: flex-end; }
+  .burbuja {
+    max-width: 88%; padding: .7rem 1rem; border-radius: 10px; white-space: pre-wrap;
+    line-height: 1.45; font-size: .95rem; border: 1px solid var(--borde); background: var(--panel);
+  }
+  .usuario .burbuja { background: var(--acento-suave); border-color: transparent; }
+  .sugerencias { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0; }
+  .sugerencias button {
+    font: inherit; font-size: .82rem; padding: .45rem .8rem; border-radius: 999px;
+    border: 1px solid var(--borde); background: var(--panel); color: var(--tinta);
+    cursor: pointer;
+  }
+  .sugerencias button:hover { border-color: var(--acento); color: var(--acento); }
+  form {
+    position: fixed; bottom: 0; left: 0; right: 0; background: var(--panel);
+    border-top: 1px solid var(--borde); padding: .9rem 1rem;
+  }
+  .fila { max-width: 780px; margin: 0 auto; display: flex; gap: .6rem; }
+  input {
+    flex: 1; font: inherit; font-size: .95rem; padding: .65rem .9rem; border-radius: 8px;
+    border: 1px solid var(--borde); background: var(--fondo); color: var(--tinta);
+  }
+  input:focus { outline: 2px solid var(--acento); border-color: transparent; }
+  button.enviar {
+    font: inherit; padding: .65rem 1.2rem; border-radius: 8px; border: none;
+    background: var(--acento); color: #fff; cursor: pointer;
+  }
+  button.enviar:disabled { opacity: .5; cursor: wait; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Enterprise Agent Suite</h1>
+  <span class="modo" id="modo">conectando…</span>
+</header>
+<main id="conversacion">
+  <div class="msj"><div class="burbuja">Hola, soy el asistente de gestión empresarial.
+Puedo responder sobre <b>ventas y proyectos</b>, <b>cobranzas</b>, <b>documentación interna</b> y <b>personal</b>. Probá una consulta:</div></div>
+  <div class="sugerencias" id="sugerencias">
+    <button>¿Cuánto facturamos y a qué clientes?</button>
+    <button>¿Qué facturas vencidas hay que reclamar?</button>
+    <button>¿Qué dice la política de vacaciones?</button>
+    <button>¿Qué perfiles con Python tienen disponibilidad?</button>
+  </div>
+</main>
+<form id="formulario">
+  <div class="fila">
+    <input id="entrada" placeholder="Escribí tu consulta…" autocomplete="off" required>
+    <button class="enviar" id="boton" type="submit">Enviar</button>
+  </div>
+</form>
+<script>
+  const conversacion = document.getElementById("conversacion");
+  const formulario = document.getElementById("formulario");
+  const entrada = document.getElementById("entrada");
+  const boton = document.getElementById("boton");
+
+  fetch("/salud").then(r => r.json())
+    .then(d => document.getElementById("modo").textContent = "modo " + d.modo)
+    .catch(() => document.getElementById("modo").textContent = "sin conexión");
+
+  document.getElementById("sugerencias").addEventListener("click", e => {
+    if (e.target.tagName === "BUTTON") { entrada.value = e.target.textContent; formulario.requestSubmit(); }
+  });
+
+  function agregar(texto, clase) {
+    const fila = document.createElement("div");
+    fila.className = "msj " + clase;
+    const burbuja = document.createElement("div");
+    burbuja.className = "burbuja";
+    burbuja.textContent = texto;
+    fila.appendChild(burbuja);
+    conversacion.appendChild(fila);
+    fila.scrollIntoView({behavior: "smooth", block: "end"});
+    return burbuja;
+  }
+
+  formulario.addEventListener("submit", async e => {
+    e.preventDefault();
+    const pregunta = entrada.value.trim();
+    if (!pregunta) return;
+    agregar(pregunta, "usuario");
+    entrada.value = "";
+    boton.disabled = true;
+    const espera = agregar("Consultando a los agentes…", "agente");
+    try {
+      const r = await fetch("/consultar", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({pregunta})
+      });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const d = await r.json();
+      espera.textContent = d.respuesta;
+    } catch (err) {
+      espera.textContent = "Error al consultar: " + err.message;
+    } finally {
+      boton.disabled = false;
+      entrada.focus();
+    }
+  });
+</script>
+</body>
+</html>

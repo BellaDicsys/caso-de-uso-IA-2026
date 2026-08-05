@@ -7,19 +7,22 @@ pertenece la consulta, delega, y sintetiza la respuesta final. Ver ADR-0001.
 
 from __future__ import annotations
 
-from dicsys_agents.agents.base import Agent
-from dicsys_agents.agents.specialists import (
+from enterprise_agents.agents.base import Agent
+from enterprise_agents.agents.specialists import (
     crear_analista_datos,
+    crear_analista_finanzas,
     crear_gestor_documental,
     crear_gestor_personal,
 )
-from dicsys_agents.config import Settings
-from dicsys_agents.llm.base import LLMClient
-from dicsys_agents.tools.base import ToolDef
+from enterprise_agents.config import Settings
+from enterprise_agents.llm.base import LLMClient
+from enterprise_agents.tools.base import ToolDef
 
 _PROMPT_ORQUESTADOR = """\
 Sos el asistente de gestión empresarial de Dicsys, una consultora de servicios
 tecnológicos (analítica de datos, BI, ERP y gestión documental).
+Los dominios que cubrís son: analítica (ventas/proyectos), finanzas
+(cobranzas/facturas), documental (políticas/contratos) y personal (perfiles).
 
 Coordinás un equipo de agentes especialistas y tu trabajo es:
 1. Entender la consulta del usuario.
@@ -31,7 +34,7 @@ Coordinás un equipo de agentes especialistas y tu trabajo es:
    conclusión y citando los datos que aportó cada especialista.
 
 No inventes datos: todo lo fáctico debe salir de los especialistas. Si la
-consulta está fuera de los tres dominios, decilo y sugerí a quién contactar.
+consulta está fuera de estos dominios, decilo y sugerí a quién contactar.
 """
 
 
@@ -58,6 +61,7 @@ def _agente_como_herramienta(nombre: str, descripcion: str, agente: Agent) -> To
 
 def crear_orquestador(llm: LLMClient, settings: Settings) -> Agent:
     analista = crear_analista_datos(llm, settings.max_iterations)
+    finanzas = crear_analista_finanzas(llm, settings.max_iterations)
     documental = crear_gestor_documental(llm, settings.max_iterations)
     personal = crear_gestor_personal(llm, settings.max_iterations)
 
@@ -67,6 +71,12 @@ def crear_orquestador(llm: LLMClient, settings: Settings) -> Agent:
             "Delegá en el analista de datos consultas sobre ventas, facturación, "
             "ingresos por cliente o servicio, y estado/avance de proyectos.",
             analista,
+        ),
+        _agente_como_herramienta(
+            "delegar_analista_finanzas",
+            "Delegá en el analista financiero consultas sobre cobranzas, cuentas "
+            "por cobrar, facturas vencidas, mora y deuda de clientes.",
+            finanzas,
         ),
         _agente_como_herramienta(
             "delegar_gestor_documental",

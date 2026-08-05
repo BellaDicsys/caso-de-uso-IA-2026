@@ -4,12 +4,12 @@ Verifican el flujo completo orquestador → especialista → herramienta →
 síntesis, sin llamadas externas.
 """
 
-from dicsys_agents.agents.base import Agent
-from dicsys_agents.config import Settings
-from dicsys_agents.llm.base import LLMReply
-from dicsys_agents.llm.mock_client import MockLLMClient
-from dicsys_agents.orchestrator import crear_orquestador
-from dicsys_agents.tools.base import ToolDef
+from enterprise_agents.agents.base import Agent
+from enterprise_agents.config import Settings
+from enterprise_agents.llm.base import LLMReply
+from enterprise_agents.llm.mock_client import MockLLMClient
+from enterprise_agents.orchestrator import crear_orquestador
+from enterprise_agents.tools.base import ToolDef
 
 
 def _orquestador() -> Agent:

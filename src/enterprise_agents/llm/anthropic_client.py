@@ -15,7 +15,7 @@ from typing import Any
 
 import anthropic
 
-from dicsys_agents.llm.base import LLMReply
+from enterprise_agents.llm.base import LLMReply
 
 DEFAULT_MAX_TOKENS = 4096
 

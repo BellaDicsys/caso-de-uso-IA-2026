@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from dicsys_agents.agents.base import Agent
-from dicsys_agents.llm.base import LLMClient
-from dicsys_agents.tools.analytics import HERRAMIENTAS_ANALITICA
-from dicsys_agents.tools.documents import HERRAMIENTAS_DOCUMENTOS
-from dicsys_agents.tools.hr import HERRAMIENTAS_PERSONAL
+from enterprise_agents.agents.base import Agent
+from enterprise_agents.llm.base import LLMClient
+from enterprise_agents.tools.analytics import HERRAMIENTAS_ANALITICA
+from enterprise_agents.tools.documents import HERRAMIENTAS_DOCUMENTOS
+from enterprise_agents.tools.finance import HERRAMIENTAS_FINANZAS
+from enterprise_agents.tools.hr import HERRAMIENTAS_PERSONAL
 
 _PROMPT_ANALISTA = """\
 Sos el analista de datos de Dicsys, una consultora de servicios tecnológicos.
@@ -66,6 +67,26 @@ def crear_gestor_personal(llm: LLMClient, max_iterations: int = 8) -> Agent:
         name="gestor_personal",
         system_prompt=_PROMPT_PERSONAL,
         tools=HERRAMIENTAS_PERSONAL,
+        llm=llm,
+        max_iterations=max_iterations,
+    )
+
+
+_PROMPT_FINANZAS = """\
+Sos el analista financiero de la empresa. Respondés consultas sobre cobranzas,
+facturas y deuda de clientes usando las herramientas disponibles.
+
+Basá cada cifra en el resultado de las herramientas: no inventes montos.
+Respondé en español, con el total relevante primero. Si hay facturas vencidas,
+señalá cuáles conviene reclamar primero (las más antiguas y de mayor monto).
+"""
+
+
+def crear_analista_finanzas(llm: LLMClient, max_iterations: int = 8) -> Agent:
+    return Agent(
+        name="analista_finanzas",
+        system_prompt=_PROMPT_FINANZAS,
+        tools=HERRAMIENTAS_FINANZAS,
         llm=llm,
         max_iterations=max_iterations,
     )

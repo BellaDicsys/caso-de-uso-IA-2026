@@ -1,6 +1,6 @@
-# Memoria descriptiva del proyecto — Dicsys Agent Suite
+# Memoria descriptiva del proyecto — Enterprise Agent Suite
 
-**Versión:** 1.0 — Agosto 2026
+**Versión:** 1.1 — Agosto 2026
 **Proyecto:** Caso de uso IA 2026
 **Organización:** Dicsys — consultora de servicios tecnológicos (analítica de datos,
 BI, ERP, gestión documental)
@@ -10,10 +10,10 @@ BI, ERP, gestión documental)
 
 ## 1. Antecedentes y motivación
 
-Dicsys trabaja con diversos clientes y gestiona recursos empresariales en tres
-frentes permanentes: **analítica de datos** (ventas, proyectos, horas), **gestión
-documental** (políticas, manuales, contratos) y **gestión de personal** (perfiles,
-habilidades, asignaciones). Estas consultas hoy dependen de personas que conocen
+Dicsys trabaja con diversos clientes y gestiona recursos empresariales en frentes
+permanentes: **analítica de datos** (ventas, proyectos, horas), **finanzas**
+(cobranzas, facturación), **gestión documental** (políticas, manuales, contratos)
+y **gestión de personal** (perfiles, habilidades, asignaciones). Estas consultas hoy dependen de personas que conocen
 dónde está cada dato y cada documento.
 
 En paralelo, el mercado de gestión empresarial atraviesa el pasaje de la IA
@@ -33,8 +33,9 @@ empresarial con mejores prácticas de ingeniería y de desarrollo asistido por I
 
 **Objetivos específicos:**
 
-1. Implementar un sistema multi-agente (orquestador + especialistas) sobre los tres
-   dominios de negocio de la empresa.
+1. Implementar un sistema multi-agente (orquestador + especialistas) sobre los
+   dominios de negocio de la empresa, demostrando además la extensibilidad del
+   patrón (el cuarto dominio, finanzas, se agregó sin tocar el resto del sistema).
 2. Aplicar el principio "el modelo decide, el código ejecuta" con validación,
    trazabilidad y manejo de errores de nivel productivo.
 3. Hacer el resultado **evaluable por cualquiera**: instalación en un comando y
@@ -45,13 +46,14 @@ empresarial con mejores prácticas de ingeniería y de desarrollo asistido por I
 
 ## 3. Descripción de la solución
 
-La **Dicsys Agent Suite** es una aplicación Python que expone, por línea de
-comandos, un asistente de gestión empresarial:
+La **Enterprise Agent Suite** es una aplicación Python que expone un asistente de
+gestión empresarial por línea de comandos, por API HTTP y por chat web:
 
 - El usuario formula una consulta en lenguaje natural.
 - Un **agente orquestador** (impulsado por Claude) interpreta la consulta y la
-  delega en uno o más **agentes especialistas** — Analista de Datos, Gestor
-  Documental, Gestor de Personal — mediante herramientas de delegación.
+  delega en uno o más **agentes especialistas** — Analista de Datos, Analista
+  Financiero, Gestor Documental, Gestor de Personal — mediante herramientas de
+  delegación.
 - Cada especialista resuelve su parte ejecutando **herramientas de dominio**
   (funciones Python determinísticas sobre los datos de la organización) y responde
   fundado en esos datos.
@@ -59,7 +61,8 @@ comandos, un asistente de gestión empresarial:
   citando las fuentes.
 
 La demo opera sobre **datos sintéticos** representativos del negocio (20
-operaciones de venta, 7 proyectos, 12 empleados, 3 documentos corporativos) y
+operaciones de venta, 7 proyectos, 15 facturas, 12 empleados, 3 documentos
+corporativos) y
 funciona en dos modos con el mismo código: **demo offline** (sin API key, cliente
 simulado determinístico) y **live** (API de Claude, modelo `claude-opus-5`).
 
@@ -83,9 +86,9 @@ documentada en [guia-vibecoding.md](guia-vibecoding.md):
 
 | Dimensión | Resultado |
 |---|---|
-| Producto | Suite funcional con 4 escenarios de negocio demostrables + consultas libres |
-| Código | ~1.900 líneas (código, tests, datos y docs), 1 sola dependencia de runtime |
-| Calidad | 16 tests automatizados; lint y formato limpios; CI en GitHub Actions |
+| Producto | Suite con 4 dominios de negocio, 5 escenarios de demo, consultas libres, API HTTP y chat web |
+| Código | ~2.700 líneas (código, tests, datos y docs); núcleo con 1 sola dependencia de runtime |
+| Calidad | 26 tests automatizados + set de evaluación de 6 escenarios; lint y formato limpios; CI en GitHub Actions |
 | Evaluabilidad | Demo completa sin credenciales en 2 comandos |
 | Documentación | 7 documentos: arquitectura, especificaciones técnicas, funcional, memoria, investigación de mercado, guía de vibecoding y 3 ADRs |
 | Seguridad | Validación de argumentos del modelo, bloqueo de path traversal, límites de iteración, manejo de rechazos del modelo |
@@ -94,12 +97,12 @@ documentada en [guia-vibecoding.md](guia-vibecoding.md):
 
 1. **Conexión a sistemas reales** — DWH para analítica, búsqueda semántica para
    documental, HRIS para personal (las herramientas son el único punto de cambio).
-2. **Nuevos canales** — API HTTP, bot de Slack/Teams, integración en el portal
-   interno.
-3. **Nuevos dominios** — finanzas, compras, soporte: el patrón está preparado para
-   agregarlos sin tocar el resto del sistema.
-4. **Evaluación continua** — convertir los escenarios en un set de evaluación
-   contra el modelo real, ejecutado periódicamente en CI.
+2. **Nuevos canales** — el chat web y la API HTTP ya existen como base; siguen
+   bot de Slack/Teams e integración en el portal interno.
+3. **Nuevos dominios** — compras, soporte, legales: el patrón quedó demostrado
+   con el alta de finanzas sin tocar el resto del sistema.
+4. **Evaluación continua** — el set de evaluación ya corre en CI en modo mock;
+   siguiente paso: ejecutarlo periódicamente contra el modelo real (`eval --live`).
 5. **Gobernanza productiva** — permisos por herramienta y usuario, auditoría
    centralizada, políticas de datos sensibles.
 

@@ -1,6 +1,6 @@
 """Tests de las herramientas de analítica."""
 
-from dicsys_agents.tools.analytics import avance_proyectos, resumen_ventas
+from enterprise_agents.tools.analytics import avance_proyectos, resumen_ventas
 
 
 def test_resumen_ventas_incluye_total_y_clientes():

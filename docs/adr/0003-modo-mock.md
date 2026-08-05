@@ -17,7 +17,7 @@ smoke test de CI.
 
 ## Justificación
 
-- **Evaluabilidad**: `pip install -e .` + `dicsys-agents demo` funciona en cualquier
+- **Evaluabilidad**: `pip install -e .` + `enterprise-agents demo` funciona en cualquier
   máquina, sin credenciales ni red.
 - **Tests estables y gratis**: el flujo agéntico completo (orquestador → especialista
   → herramienta → síntesis) se verifica en milisegundos y sin costo.

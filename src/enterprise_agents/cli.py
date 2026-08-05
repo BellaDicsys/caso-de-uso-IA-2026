@@ -1,9 +1,11 @@
 """Interfaz de línea de comandos de la suite.
 
 Uso:
-    dicsys-agents demo                # corre los escenarios de demostración
-    dicsys-agents ask "pregunta"      # consulta libre al orquestador
-    dicsys-agents ask --live "..."    # fuerza el uso de la API real
+    enterprise-agents demo                # corre los escenarios de demostración
+    enterprise-agents ask "pregunta"      # consulta libre al orquestador
+    enterprise-agents ask --live "..."    # fuerza el uso de la API real
+    enterprise-agents eval [--live]       # set de evaluación (mock o modelo real)
+    enterprise-agents serve [--port N]    # API HTTP + chat web
 
 Sin ANTHROPIC_API_KEY, la suite corre en modo demo (mock) sin llamadas
 externas, para que el repositorio sea evaluable sin credenciales.
@@ -15,16 +17,17 @@ import argparse
 import logging
 import sys
 
-from dicsys_agents.config import Settings, load_settings
-from dicsys_agents.llm.base import LLMClient
-from dicsys_agents.llm.mock_client import MockLLMClient
-from dicsys_agents.orchestrator import crear_orquestador
+from enterprise_agents.config import Settings, load_settings
+from enterprise_agents.llm.base import LLMClient
+from enterprise_agents.llm.mock_client import MockLLMClient
+from enterprise_agents.orchestrator import crear_orquestador
 
 ESCENARIOS_DEMO = [
     "¿Cuánto facturamos este año y quiénes son nuestros principales clientes?",
     "¿Cuántos días de vacaciones le corresponden a alguien con 7 años de antigüedad?",
     "Necesito armar un equipo con Python: ¿qué perfiles tienen disponibilidad?",
     "¿Qué proyectos están en riesgo por consumo de horas?",
+    "¿Qué facturas vencidas hay que reclamar?",
 ]
 
 
@@ -34,7 +37,7 @@ def _crear_llm(settings: Settings, forzar_live: bool) -> tuple[LLMClient, str]:
             print("ERROR: --live requiere ANTHROPIC_API_KEY en el entorno.", file=sys.stderr)
             raise SystemExit(2)
         # Import diferido: el SDK solo se necesita en modo live.
-        from dicsys_agents.llm.anthropic_client import AnthropicLLMClient
+        from enterprise_agents.llm.anthropic_client import AnthropicLLMClient
 
         return AnthropicLLMClient(model=settings.model), f"live ({settings.model})"
     return MockLLMClient(), "demo (mock, sin llamadas externas)"
@@ -47,7 +50,7 @@ def _responder(pregunta: str, llm: LLMClient, settings: Settings) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        prog="dicsys-agents",
+        prog="enterprise-agents",
         description="Suite agéntica de gestión empresarial de Dicsys.",
     )
     parser.add_argument(
@@ -61,15 +64,35 @@ def main(argv: list[str] | None = None) -> int:
     ask.add_argument("pregunta", help="la consulta en lenguaje natural")
     ask.add_argument("--live", action="store_true", help="fuerza el uso de la API de Claude")
 
+    ev = sub.add_parser("eval", help="corre el set de evaluación de escenarios")
+    ev.add_argument("--live", action="store_true", help="evalúa contra la API de Claude")
+
+    serve = sub.add_parser("serve", help="levanta la API HTTP y el chat web")
+    serve.add_argument("--host", default="127.0.0.1")
+    serve.add_argument("--port", type=int, default=8000)
+
     args = parser.parse_args(argv)
     logging.basicConfig(
         level=logging.INFO if args.verbose else logging.WARNING,
         format="%(levelname)s %(message)s",
     )
 
+    if args.comando == "serve":
+        # Import diferido: FastAPI/uvicorn solo se necesitan para la API.
+        from enterprise_agents.api import servir
+
+        print(f"» Chat web en http://{args.host}:{args.port}")
+        servir(host=args.host, port=args.port)
+        return 0
+
     settings = load_settings()
     llm, modo = _crear_llm(settings, getattr(args, "live", False))
     print(f"» Modo: {modo}\n")
+
+    if args.comando == "eval":
+        from enterprise_agents.evals import correr_evaluacion, imprimir_reporte
+
+        return 0 if imprimir_reporte(correr_evaluacion(llm, settings)) else 1
 
     if args.comando == "demo":
         for i, pregunta in enumerate(ESCENARIOS_DEMO, 1):

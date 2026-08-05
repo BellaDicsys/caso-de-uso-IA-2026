@@ -7,7 +7,7 @@ Expone una interfaz única (`LLMClient`) con dos implementaciones:
   offline y para la suite de tests.
 """
 
-from dicsys_agents.llm.base import LLMClient, LLMReply, ToolCall
-from dicsys_agents.llm.mock_client import MockLLMClient
+from enterprise_agents.llm.base import LLMClient, LLMReply, ToolCall
+from enterprise_agents.llm.mock_client import MockLLMClient
 
 __all__ = ["LLMClient", "LLMReply", "MockLLMClient", "ToolCall"]

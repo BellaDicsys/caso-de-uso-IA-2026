@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "dicsys-agent-suite"
+name = "enterprise-agent-suite"
 version = "0.1.0"
 description = "Suite agéntica de gestión empresarial para Dicsys: analítica de datos, gestión documental y gestión de personal orquestadas por agentes de IA."
 readme = "README.md"
@@ -15,16 +15,26 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+api = [
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+]
 dev = [
     "pytest>=8.0",
     "ruff>=0.6",
+    "httpx>=0.27",
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
 ]
 
 [project.scripts]
-dicsys-agents = "dicsys_agents.cli:main"
+enterprise-agents = "enterprise_agents.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+enterprise_agents = ["static/*.html"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

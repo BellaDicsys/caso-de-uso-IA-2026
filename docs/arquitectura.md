@@ -42,12 +42,13 @@ Cada agente tiene:
 
 | Capa | Módulo | Responsabilidad |
 |---|---|---|
-| Interfaz | `cli.py` | Comandos `demo` y `ask`, selección de modo live/mock |
+| Interfaz | `cli.py`, `api.py`, `static/index.html` | CLI (`demo`/`ask`/`eval`/`serve`), API HTTP y chat web |
 | Orquestación | `orchestrator.py` | Orquestador con los especialistas expuestos como herramientas de delegación |
 | Agentes | `agents/base.py`, `agents/specialists.py` | Bucle agéntico común; prompts y armado de cada especialista |
-| Herramientas | `tools/analytics.py`, `tools/documents.py`, `tools/hr.py` | Lógica de dominio determinística sobre `data/` |
+| Herramientas | `tools/analytics.py`, `tools/finance.py`, `tools/documents.py`, `tools/hr.py` | Lógica de dominio determinística sobre `data/` |
 | LLM | `llm/anthropic_client.py`, `llm/mock_client.py` | Acceso al modelo detrás de una interfaz única (`LLMClient`) |
 | Configuración | `config.py` | Variables de entorno, rutas, modelo por defecto |
+| Evaluación | `evals.py` | Set de escenarios con criterios verificables (mock y live) |
 
 ### Separación clave: razonamiento vs. ejecución
 
@@ -82,6 +83,7 @@ por lo que **el bucle agéntico es uno solo** y no hay ramas por modo.
 | Dominio | Fuente demo | Equivalente en producción |
 |---|---|---|
 | Analítica | `data/ventas.csv`, `data/proyectos.csv` | Data warehouse (Snowflake/BigQuery/Redshift) vía SQL parametrizado |
+| Finanzas | `data/facturas.csv` | ERP / sistema de facturación vía API |
 | Documental | `data/documentos/*.md` (búsqueda léxica) | Repositorio documental con búsqueda semántica (embeddings + RAG) |
 | Personal | `data/empleados.csv` | HRIS vía API, con control de acceso por rol |
 
@@ -100,8 +102,8 @@ solo las implementaciones de las herramientas y la infraestructura alrededor:
 4. **Evaluación continua** — convertir los escenarios de la demo en un set de
    evaluación con respuestas esperadas, y correrlo en CI contra el modelo real en
    un job programado.
-5. **Canales** — exponer el orquestador vía API HTTP, Slack/Teams o el portal interno;
-   la CLI actual es una fachada más sobre `crear_orquestador()`.
+5. **Canales** — la API HTTP (FastAPI) y el chat web ya están implementados como
+   fachadas sobre `crear_orquestador()`; siguen Slack/Teams y el portal interno.
 6. **Escalado del patrón** — nuevos dominios (finanzas, compras, soporte) se agregan
    creando un especialista con sus herramientas y sumándolo a la lista del
    orquestador: el resto del sistema no se toca.

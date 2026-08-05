@@ -10,8 +10,8 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from dicsys_agents.llm.base import LLMClient
-from dicsys_agents.tools.base import ToolDef
+from enterprise_agents.llm.base import LLMClient
+from enterprise_agents.tools.base import ToolDef
 
 logger = logging.getLogger(__name__)
 
