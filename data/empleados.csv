@@ -1,0 +1,13 @@
+legajo,nombre,rol,seniority,habilidades,proyecto_actual,disponibilidad_pct
+1001,Valentina Ríos,Data Engineer,Senior,Python;SQL;Airflow;Spark,Banco Andino - DWH,10
+1002,Marcos Peralta,Data Analyst,Semi Senior,SQL;Power BI;Python,Retail Sur - Dashboards,25
+1003,Lucía Fernández,ML Engineer,Senior,Python;MLOps;TensorFlow;AWS,AgroExport - Prediccion,0
+1004,Joaquín Suárez,Consultor ERP,Senior,SAP;ABAP;Integraciones,Energia Norte - ERP,15
+1005,Camila Duarte,Data Analyst,Junior,SQL;Excel;Power BI,Sin asignar,100
+1006,Federico Gómez,Backend Developer,Semi Senior,Python;FastAPI;PostgreSQL,Salud Integral - API,40
+1007,Martina López,Data Engineer,Semi Senior,Python;SQL;dbt;Snowflake,Sin asignar,100
+1008,Nicolás Vega,Consultor BI,Senior,Power BI;Tableau;SQL;DAX,Banco Andino - BI,20
+1009,Sofía Méndez,Project Manager,Senior,Scrum;Kanban;Gestion de riesgos,Logistica Austral - PMO,30
+1010,Tomás Herrera,ML Engineer,Junior,Python;scikit-learn;SQL,Sin asignar,100
+1011,Agustina Silva,QA Engineer,Semi Senior,Testing;Selenium;Python,Retail Sur - Dashboards,50
+1012,Ramiro Acosta,DevOps Engineer,Senior,AWS;Terraform;Docker;CI/CD,Transversal - Plataforma,35

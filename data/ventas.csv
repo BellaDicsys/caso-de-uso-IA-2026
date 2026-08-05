@@ -1,0 +1,21 @@
+fecha,cliente,servicio,monto_usd,region
+2026-01-15,Banco Andino,Analitica de Datos,42000,Argentina
+2026-01-28,Retail Sur,Business Intelligence,18500,Chile
+2026-02-03,Banco Andino,Soporte ERP,12000,Argentina
+2026-02-14,AgroExport SA,Analitica de Datos,27500,Uruguay
+2026-02-20,Salud Integral,Gestion Documental IA,15800,Argentina
+2026-03-05,Retail Sur,Analitica de Datos,31000,Chile
+2026-03-11,Energia Norte,Soporte ERP,22400,Argentina
+2026-03-19,Banco Andino,Business Intelligence,38000,Argentina
+2026-04-02,AgroExport SA,Soporte ERP,9800,Uruguay
+2026-04-09,Salud Integral,Analitica de Datos,26400,Argentina
+2026-04-22,Energia Norte,Business Intelligence,17300,Argentina
+2026-05-06,Retail Sur,Gestion Documental IA,21000,Chile
+2026-05-15,Banco Andino,Analitica de Datos,45500,Argentina
+2026-05-27,Logistica Austral,Analitica de Datos,19700,Chile
+2026-06-04,Energia Norte,Analitica de Datos,28900,Argentina
+2026-06-12,AgroExport SA,Business Intelligence,16200,Uruguay
+2026-06-25,Salud Integral,Soporte ERP,11500,Argentina
+2026-07-03,Logistica Austral,Gestion Documental IA,24600,Chile
+2026-07-17,Banco Andino,Soporte ERP,13200,Argentina
+2026-07-29,Retail Sur,Business Intelligence,29800,Chile
