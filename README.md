@@ -1,4 +1,4 @@
-# AI Agent Suite (AIas) — Caso de uso IA 2026
+# Enterprise Agent Suite — Caso de uso IA 2026
 
 Suite **agéntica de gestión empresarial** que demuestra la capacidad de
 construir soluciones de IA aplicadas a sus dominios de negocio: **analítica de datos**,
