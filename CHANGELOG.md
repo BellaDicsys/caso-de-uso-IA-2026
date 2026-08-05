@@ -5,13 +5,13 @@ Todas las versiones publicadas de la Enterprise Agent Suite. El formato sigue
 [semántico](https://semver.org/lang/es/); las entradas se generan
 automáticamente desde los *Conventional Commits* (ver
 [docs/adr/0006-versionado-automatico.md](docs/adr/0006-versionado-automatico.md)).
+Las versiones anteriores a la puesta en marcha del versionado automático se
+reconstruyeron a partir del historial.
 
 ## 0.3.0 — 2026-08-05
 
 ### Nuevas funcionalidades
 
-- **versionado**: versionado automático por Conventional Commits, con changelog,
-  tag y release generados en CI
 - **tablero**: tablero de control con KPIs, alertas tempranas por severidad y
   gráficos SVG con paleta validada para daltonismo
 - **auth**: autenticación por sesión y RBAC de tres roles (consulta, gestor, admin)
