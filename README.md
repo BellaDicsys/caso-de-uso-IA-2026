@@ -1,12 +1,13 @@
 # Enterprise Agent Suite — Caso de uso IA 2026
 
 Suite **agéntica de gestión empresarial** que demuestra la capacidad de
-construir soluciones de IA aplicadas a sus dominios de negocio: **analítica de datos**,
-**gestión documental** y **gestión de personal**.
+construir soluciones de IA aplicadas a los dominios de negocio de la empresa:
+**analítica de datos**, **finanzas**, **gestión documental** y **gestión de personal**.
 
 Un agente **orquestador** recibe consultas en lenguaje natural, las delega en agentes
 **especialistas** (cada uno con sus propias herramientas sobre los datos de la empresa)
-y sintetiza una única respuesta. Se usa por **CLI** o por **chat web** (API HTTP).
+y sintetiza una única respuesta. Se usa por **CLI**, por **chat web**, por **API HTTP**,
+con **tablero de control** de alertas tempranas y una **versión móvil con chat de voz**.
 
 ```mermaid
 flowchart TD
@@ -21,6 +22,30 @@ flowchart TD
     P --> P1["buscar_por_habilidad\ndisponibilidad_equipo"] --> DP[("data/empleados.csv")]
 ```
 
+## Stack implementado
+
+| Capa | Tecnología | Detalle |
+|---|---|---|
+| Lenguaje | Python ≥ 3.10 | probado en 3.10 y 3.12 (CI) |
+| Modelo de IA | Claude (`claude-opus-5`) | vía SDK oficial `anthropic`, tool use, razonamiento adaptativo |
+| Núcleo agéntico | propio | orquestador + 4 especialistas, capa `LLMClient` con cliente real y mock |
+| API / web | FastAPI + uvicorn | REST (`/consultar`, `/metricas`), páginas protegidas por sesión |
+| Autenticación | propia | PBKDF2-HMAC-SHA256, cookie de sesión HttpOnly, RBAC de 3 roles |
+| Design system | propio (`ds.css` + `ds.js`) | tokens estilo Material 3, tema claro/oscuro, microinteracciones |
+| Tablero | SVG propio | KPIs + alertas tempranas + 3 gráficos, paleta validada para daltonismo |
+| Móvil | Web Speech API | chat de voz: dictado (SpeechRecognition) + respuesta hablada (speechSynthesis) |
+| Calidad | pytest + pytest-cov + ruff | 49 tests, cobertura 94% (umbral 85% en CI), lint y formato |
+
+## Superficies de uso
+
+- **CLI** — `enterprise-agents demo | ask | eval | serve`
+- **Chat web** (`/`) — asistente conversacional sobre el orquestador
+- **Versión móvil** (`/movil`) — alcance reducido (solo chat) con **entrada y salida por voz**
+- **Tablero de control** (`/tablero`) — KPIs y **alertas tempranas** por severidad, con
+  gráficos de ventas, deuda por cliente y consumo de horas por proyecto (roles gestor/admin)
+- **Gestión de usuarios** (`/usuarios`) — alta/baja y roles (rol admin)
+- **API HTTP** — `POST /consultar`, `GET /metricas`, `GET /salud` y autenticación
+
 ## Inicio rápido
 
 Requiere Python 3.10+. **No hace falta clave de API para evaluar el proyecto**: sin
@@ -30,21 +55,22 @@ externas) con el mismo flujo agéntico completo.
 ```bash
 pip install -e ".[dev]"
 
-# Demo con los 5 escenarios de negocio
+# CLI: demo con los 5 escenarios de negocio
 enterprise-agents demo
 
-# Consulta libre
-enterprise-agents ask "¿Qué facturas vencidas hay que reclamar?"
+# CLI: consulta libre (con -v se ven las delegaciones y herramientas)
+enterprise-agents -v ask "¿Qué facturas vencidas hay que reclamar?"
 
-# Con -v se ven las delegaciones y llamadas a herramientas
-enterprise-agents -v ask "Armá un equipo con Python"
-
-# Chat web + API HTTP en http://localhost:8000
-enterprise-agents serve
-
-# Set de evaluación (6 escenarios con criterios verificables)
+# CLI: set de evaluación (6 escenarios con criterios verificables)
 enterprise-agents eval
+
+# Web: chat + tablero + API en http://localhost:8000
+enterprise-agents serve
 ```
+
+Al abrir la web, ingresá con un usuario de demostración (`admin` / `gestion` /
+`consulta`, clave `<usuario>2026`). El tablero está en `/tablero` y la versión
+móvil con voz en `/movil`.
 
 Para usar el modelo real (Claude):
 
@@ -57,32 +83,31 @@ enterprise-agents ask --live "¿Cuánto facturamos a Banco Andino y quién puede
 ## Verificación
 
 ```bash
-python -m pytest      # 26 tests (herramientas + bucle agéntico + API + evaluación)
-ruff check .          # lint
-ruff format --check . # formato
+python -m pytest --cov   # 49 tests + cobertura (94 %)
+ruff check .             # lint
+ruff format --check .    # formato
 ```
 
-El pipeline de CI (`.github/workflows/ci.yml`) ejecuta lint, tests y la demo offline
-como smoke test en cada push.
+El pipeline de CI (`.github/workflows/ci.yml`) ejecuta lint, tests con umbral de
+cobertura del 85 % y la demo offline como smoke test en cada push.
 
 ## Estructura del repositorio
 
 ```
-├── data/                      # Datos de ejemplo (ventas, proyectos, empleados, documentos)
-├── docs/
-│   ├── arquitectura.md        # Diseño de la solución y camino a producción
-│   ├── casos-innovacion.md    # Investigación: casos de innovación que fundamentan el proyecto
-│   ├── guia-vibecoding.md     # Prácticas de desarrollo asistido por IA usadas aquí
-│   └── adr/                   # Decisiones de arquitectura (ADRs)
+├── data/                      # Datos de ejemplo (ventas, proyectos, facturas, empleados, documentos, usuarios)
+├── docs/                      # Memoria, funcional, especificaciones, arquitectura, casos, vibecoding, ADRs
 ├── src/enterprise_agents/
 │   ├── orchestrator.py        # Orquestador (patrón agente-como-herramienta)
 │   ├── agents/                # Bucle agéntico + 4 especialistas
 │   ├── tools/                 # Herramientas de dominio (analítica, finanzas, documentos, personal)
 │   ├── llm/                   # Capa LLM: cliente Anthropic + cliente mock
-│   ├── api.py                 # API HTTP (FastAPI) + chat web (static/index.html)
+│   ├── metrics.py             # KPIs y alertas tempranas del tablero
+│   ├── auth.py                # Autenticación, usuarios y roles (RBAC)
+│   ├── api.py                 # API HTTP (FastAPI): chat, tablero, usuarios, móvil
 │   ├── evals.py               # Set de evaluación de escenarios
-│   └── cli.py                 # CLI: demo / ask / eval / serve
-└── tests/                     # Suite de tests (sin llamadas externas)
+│   ├── cli.py                 # CLI: demo / ask / eval / serve
+│   └── static/                # DS propio (ds.css/ds.js) + páginas (chat, tablero, usuarios, móvil, login)
+└── tests/                     # Suite de tests (49, sin llamadas externas)
 ```
 
 ## Documentación
@@ -101,7 +126,8 @@ como smoke test en cada push.
 ## Alcance
 
 Este repositorio es un **caso de uso demostrativo** (entrega sin deploy): los datos son
-sintéticos y las herramientas leen archivos locales. La sección *"Camino a producción"*
-de [docs/arquitectura.md](docs/arquitectura.md) describe cómo cada componente se
-conecta a sistemas reales (data warehouse, repositorio documental, HRIS) sin cambiar
-la arquitectura.
+sintéticos y las herramientas leen archivos locales. La autenticación usa un almacén
+local de usuarios con claves de demostración documentadas. La sección *"Camino a
+producción"* de [docs/arquitectura.md](docs/arquitectura.md) describe cómo cada
+componente se conecta a sistemas reales (data warehouse, repositorio documental, HRIS,
+directorio corporativo / SSO) sin cambiar la arquitectura.
