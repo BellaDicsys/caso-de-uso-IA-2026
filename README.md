@@ -34,7 +34,7 @@ flowchart TD
 | Design system | propio (`ds.css` + `ds.js`) | tokens estilo Material 3, tema claro/oscuro, microinteracciones |
 | Tablero | SVG propio | KPIs + alertas tempranas + 3 gráficos, paleta validada para daltonismo |
 | Móvil | Web Speech API | chat de voz: dictado (SpeechRecognition) + respuesta hablada (speechSynthesis) |
-| Calidad | pytest + pytest-cov + ruff | 94 tests, cobertura 94% (umbral 85% en CI), lint y formato |
+| Calidad | pytest + pytest-cov + ruff | 96 tests, cobertura 94% (umbral 85% en CI), lint y formato |
 | Versionado | propio (`versionado.py`) | semver automático desde Conventional Commits: changelog, tag y release en CI |
 
 ## Superficies de uso
@@ -45,6 +45,8 @@ flowchart TD
 - **Tablero de control** (`/tablero`) — KPIs y **alertas tempranas** por severidad, con
   gráficos de ventas, deuda por cliente y consumo de horas por proyecto (roles gestor/admin)
 - **Gestión de usuarios** (`/usuarios`) — alta/baja y roles (rol admin)
+- **Ayuda e inducción** (`/ayuda`) — qué preguntar, cómo leer el tablero y qué puede
+  cada rol; sensible al rol de quien la lee
 - **API HTTP** — `POST /consultar`, `GET /metricas`, `GET /salud` y autenticación
 
 ## Inicio rápido
@@ -71,7 +73,11 @@ enterprise-agents serve
 
 Al abrir la web, ingresá con un usuario de demostración (`admin` / `gestion` /
 `consulta`, clave `<usuario>2026`). El tablero está en `/tablero` y la versión
-móvil con voz en `/movil`.
+móvil con voz en `/movil`. La primera visita al chat muestra una inducción breve;
+la ayuda completa está siempre en `/ayuda` (botón ❔).
+
+Guía de instalación y uso paso a paso —incluido cómo levantarlo desde VS Code—
+en [docs/guia-de-uso.md](docs/guia-de-uso.md).
 
 Para usar el modelo real (Claude):
 
@@ -84,7 +90,7 @@ enterprise-agents ask --live "¿Cuánto facturamos a Banco Andino y quién puede
 ## Verificación
 
 ```bash
-python -m pytest --cov   # 94 tests + cobertura (94 %)
+python -m pytest --cov   # 96 tests + cobertura (94 %)
 ruff check .             # lint
 ruff format --check .    # formato
 ```
@@ -134,14 +140,15 @@ GitHub con las notas generadas. Fundamento en
 │   ├── evals.py               # Set de evaluación de escenarios
 │   ├── versionado.py          # Versionado automático (Conventional Commits → semver)
 │   ├── cli.py                 # CLI: demo / ask / eval / serve / version
-│   └── static/                # DS propio (ds.css/ds.js) + páginas (chat, tablero, usuarios, móvil, login)
-└── tests/                     # Suite de tests (94, sin llamadas externas)
+│   └── static/                # DS propio (ds.css/ds.js) + páginas (chat, tablero, usuarios, móvil, ayuda, login)
+└── tests/                     # Suite de tests (96, sin llamadas externas)
 ```
 
 ## Documentación
 
 | Documento | Contenido |
 |---|---|
+| [docs/guia-de-uso.md](docs/guia-de-uso.md) | **Guía de uso**: cómo correrlo en local (terminal y VS Code), primeros pasos, tablero, roles, móvil y límites |
 | [docs/memoria-descriptiva.md](docs/memoria-descriptiva.md) | Memoria descriptiva del proyecto: motivación, objetivos, solución, metodología y resultados |
 | [docs/documento-funcional.md](docs/documento-funcional.md) | Documento funcional: requerimientos, casos de uso y **guía de prueba paso a paso** |
 | [docs/especificaciones-tecnicas.md](docs/especificaciones-tecnicas.md) | Especificaciones técnicas: stack, módulos, contratos, seguridad, testing |

@@ -83,6 +83,7 @@ async function montarAppbar(activa) {
     const tabs = [["/", "Chat", true]];
     if (["admin", "gestor"].includes(s.rol)) tabs.push(["/tablero", "Tablero", true]);
     if (s.rol === "admin") tabs.push(["/usuarios", "Usuarios", true]);
+    tabs.push(["/ayuda", "Ayuda", true]);  // disponible para todos los roles
     nav.innerHTML = tabs
       .map(([ruta, nombre]) =>
         `<a class="ds-tab${ruta === activa ? " activa" : ""}" href="${ruta}">${nombre}</a>`)

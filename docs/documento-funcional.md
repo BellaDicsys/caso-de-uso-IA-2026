@@ -53,7 +53,7 @@ citadas, producida por un sistema de agentes de IA.
 | RNF-02 | Seguridad: validación de argumentos generados por el modelo | Bloqueo de path traversal; errores encapsulados como `tool_result` |
 | RNF-03 | Privacidad: minimización de datos de personas | Prompt del gestor de personal; datos sintéticos |
 | RNF-04 | Control de costos: sin bucles infinitos | `max_iterations` en todo bucle; prompt caching en modo live |
-| RNF-05 | Calidad verificable en CI | 94 tests + cobertura ≥ 85 % + lint + formato + smoke test en cada push |
+| RNF-05 | Calidad verificable en CI | 96 tests + cobertura ≥ 85 % + lint + formato + smoke test en cada push |
 | RNF-06 | Idioma: interacción y documentación en español | Prompts, CLI, docs |
 
 ### 3.3 Fuera de alcance (versión demo)
@@ -136,7 +136,7 @@ pip install -e ".[dev]"
 
 | Paso | Comando | Criterio de aceptación |
 |---|---|---|
-| 1 | `python -m pytest --cov` | 94 tests OK y cobertura ≥ 85 %, sin red |
+| 1 | `python -m pytest --cov` | 96 tests OK y cobertura ≥ 85 %, sin red |
 | 2 | `ruff check . && ruff format --check .` | Sin errores |
 
 ### 5.3 Pruebas funcionales en modo demo (sin API key)
@@ -147,7 +147,8 @@ pip install -e ".[dev]"
 | 4 | `enterprise-agents -v ask "¿Qué proyectos están en riesgo?"` | La traza muestra `[orquestador] herramienta delegar_analista_datos` y `[analista_datos] herramienta avance_proyectos`; la respuesta marca P-2026-05 |
 | 5 | `enterprise-agents ask "¿Va a llover mañana?"` | Respuesta controlada de fuera de dominio (CU-06) |
 | 6 | `enterprise-agents eval` | Reporte "6/6 escenarios OK" y exit code 0 (RF-17) |
-| 7 | `enterprise-agents serve` + abrir http://localhost:8000 | El chat responde las sugerencias precargadas (CU-08); `GET /salud` devuelve `{"estado": "ok", "modo": "demo"}` |
+| 7 | `enterprise-agents serve` + abrir http://localhost:8000 | El chat responde las sugerencias precargadas (CU-08); `GET /salud` devuelve `{"estado": "ok"}` |
+| 8 | Abrir `/ayuda` con cada rol | La inducción se ve completa con gestor/admin y sin los bloques de finanzas ni personal con el rol `consulta` |
 
 ### 5.4 Pruebas con el modelo real (opcional, requiere API key)
 

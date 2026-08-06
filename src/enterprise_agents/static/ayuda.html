@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ayuda — Enterprise Agent Suite</title>
+<link rel="stylesheet" href="/ds.css">
+<style>
+  main { max-width: 860px; margin: 0 auto; padding: 1.2rem 1rem 4rem; }
+  .indice { display: flex; flex-wrap: wrap; gap: .45rem; margin: .2rem 0 1.4rem; }
+  .indice a {
+    font-size: .78rem; text-decoration: none; padding: .3rem .7rem; border-radius: 999px;
+    border: 1px solid var(--ds-borde); color: var(--ds-tinta-suave);
+  }
+  .indice a:hover { border-color: var(--ds-primario); color: var(--ds-primario); }
+  section { scroll-margin-top: 4.5rem; }
+  h2 { font-size: 1.05rem; margin: 1.8rem 0 .6rem; display: flex; align-items: center; gap: .5rem; }
+  h3 { font-size: .9rem; margin: 1rem 0 .3rem; }
+  p, li { font-size: .88rem; line-height: 1.6; }
+  ul { margin: .3rem 0 .3rem 1.1rem; }
+  .ejemplos { display: flex; flex-wrap: wrap; gap: .4rem; margin: .5rem 0 .2rem; }
+  .ejemplos a {
+    font-size: .8rem; text-decoration: none; padding: .35rem .75rem; border-radius: 8px;
+    background: var(--ds-superficie-2); border: 1px solid var(--ds-borde); color: var(--ds-tinta);
+  }
+  .ejemplos a:hover { border-color: var(--ds-primario); color: var(--ds-primario); }
+  .dominio { display: grid; gap: .1rem; margin-bottom: 1.1rem; }
+  .nota {
+    border-left: 3px solid var(--ds-primario); background: var(--ds-superficie-2);
+    padding: .7rem .9rem; border-radius: 0 8px 8px 0; margin: .8rem 0; font-size: .85rem;
+  }
+  code { background: var(--ds-superficie-2); padding: .1rem .35rem; border-radius: 5px; font-size: .85em; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="ds-appbar">
+  <h1>🧭 Enterprise Agent Suite</h1>
+  <nav></nav>
+  <span class="ds-espacio"></span>
+  <span id="ds-usuario"></span>
+  <button class="ds-tema" onclick="alternarTema()" aria-label="cambiar tema"></button>
+  <button class="ds-btn texto" onclick="salir()">Salir</button>
+</header>
+
+<main>
+  <h2 style="margin-top:.6rem">Ayuda y primeros pasos</h2>
+  <p>
+    La suite es un <b>asistente de gestión empresarial</b>: le preguntás en lenguaje
+    natural y un agente orquestador delega en el especialista que corresponda, que
+    consulta los datos de la organización y responde citando de dónde salió el número.
+    No inventa: si el dato no está en los sistemas, lo dice.
+  </p>
+
+  <div class="indice">
+    <a href="#preguntar">Qué puedo preguntar</a>
+    <a href="#bien">Cómo preguntar bien</a>
+    <a href="#tablero" data-rol="admin gestor" hidden>Leer el tablero</a>
+    <a href="#roles">Roles y permisos</a>
+    <a href="#voz">Móvil y voz</a>
+    <a href="#limites">Límites</a>
+  </div>
+
+  <!-- ------------------------------------------------------------------ -->
+  <section id="preguntar">
+    <h2>💬 Qué puedo preguntar</h2>
+    <p>
+      Hay cuatro dominios cubiertos. Tocá cualquier ejemplo y se abre el chat con
+      la consulta ya cargada.
+    </p>
+
+    <div class="ds-tarjeta">
+      <div class="dominio">
+        <h3>📊 Analítica de datos — ventas y proyectos</h3>
+        <p class="ds-ayuda">Facturación por período y cliente, ranking de clientes, avance de
+          proyectos y consumo de horas contra lo presupuestado.</p>
+        <div class="ejemplos">
+          <a href="/?q=¿Cuánto facturamos este año y quiénes son nuestros principales clientes?">¿Cuánto facturamos este año?</a>
+          <a href="/?q=¿Qué proyectos están en riesgo por consumo de horas?">¿Qué proyectos están en riesgo?</a>
+        </div>
+      </div>
+
+      <div class="dominio" data-rol="admin gestor" hidden>
+        <h3>💰 Finanzas — cobranzas y facturación</h3>
+        <p class="ds-ayuda">Estado de cobranzas, facturas vencidas ordenadas por antigüedad y
+          deuda acumulada por cliente.</p>
+        <div class="ejemplos">
+          <a href="/?q=¿Qué facturas vencidas hay que reclamar?">¿Qué facturas vencidas hay?</a>
+          <a href="/?q=¿Cuál es la deuda por cliente?">¿Cuál es la deuda por cliente?</a>
+        </div>
+      </div>
+
+      <div class="dominio">
+        <h3>📄 Gestión documental — políticas y contratos</h3>
+        <p class="ds-ayuda">Busca en los documentos corporativos y responde citando el archivo.
+          Sirve para normativa interna, manuales y condiciones contractuales.</p>
+        <div class="ejemplos">
+          <a href="/?q=¿Qué dice la política de vacaciones?">¿Qué dice la política de vacaciones?</a>
+          <a href="/?q=¿Qué SLA tenemos comprometido?">¿Qué SLA tenemos comprometido?</a>
+        </div>
+      </div>
+
+      <div class="dominio" data-rol="admin gestor" hidden>
+        <h3>👥 Personal — perfiles y disponibilidad</h3>
+        <p class="ds-ayuda">Búsqueda de personas por habilidad y disponibilidad del equipo para
+          armar un proyecto.</p>
+        <div class="ejemplos">
+          <a href="/?q=¿Qué perfiles con Python tienen disponibilidad?">¿Quién sabe Python y está libre?</a>
+          <a href="/?q=¿Cómo está la disponibilidad del equipo?">¿Cómo está la disponibilidad del equipo?</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="nota" data-rol="consulta" hidden>
+      Con tu rol <b>consulta</b> están disponibles analítica y documentación. Las
+      consultas de finanzas y personal las habilita un usuario con rol gestor o admin.
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------------ -->
+  <section id="bien">
+    <h2>🎯 Cómo preguntar bien</h2>
+    <ul>
+      <li><b>Preguntá por el negocio, no por el archivo.</b> "¿Cuánto nos debe Retail Sur?"
+        funciona mejor que "abrí facturas.csv".</li>
+      <li><b>Una intención por consulta.</b> Si necesitás dos cosas, preguntá dos veces:
+        la respuesta queda más clara y verificable.</li>
+      <li><b>Pedí el criterio si te importa.</b> "…y decime cómo lo calculaste" hace que
+        el asistente explicite la fuente y el cálculo.</li>
+      <li><b>Si la respuesta no te cierra, repreguntá.</b> El asistente mantiene el hilo
+        dentro de la conversación.</li>
+    </ul>
+  </section>
+
+  <!-- ------------------------------------------------------------------ -->
+  <section id="tablero" data-rol="admin gestor" hidden>
+    <h2>📈 Cómo leer el tablero</h2>
+    <p>
+      El <a href="/tablero">tablero</a> no reemplaza al chat: muestra de un vistazo lo que
+      hay que mirar hoy y se actualiza solo. Tiene tres partes.
+    </p>
+    <h3>1. KPIs</h3>
+    <p>Facturación total, monto por cobrar, vencido, proyectos en riesgo y personas sin
+      asignar. Son el estado del negocio en cinco números.</p>
+    <h3>2. Alertas tempranas</h3>
+    <p>Lo importante del tablero. Se calculan sobre los datos y vienen en tres severidades:</p>
+    <ul>
+      <li><span class="ds-chip critica">crítica</span> requiere acción hoy: facturas ya
+        vencidas o proyectos que superaron el presupuesto de horas.</li>
+      <li><span class="ds-chip seria">seria</span> requiere acción esta semana: consumo de
+        horas por encima del 90 % o concentración de riesgo en un cliente.</li>
+      <li><span class="ds-chip advertencia">advertencia</span> a vigilar: vencimientos
+        próximos y capacidad ociosa.</li>
+    </ul>
+    <h3>3. Gráficos</h3>
+    <p>Ventas por mes, deuda por cliente y consumo de horas por proyecto. La paleta está
+      validada para daltonismo, así que el color nunca es el único portador del dato.</p>
+    <div class="nota">
+      ¿Viste una alerta y querés el detalle? Copiá el asunto y preguntáselo al chat:
+      el asistente te da los registros concretos detrás del número.
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------------ -->
+  <section id="roles">
+    <h2>🔐 Roles y permisos</h2>
+    <p>Tu rol define qué ves <b>y qué puede consultar el asistente en tu nombre</b>: si un
+      dominio no te corresponde, el agente directamente no tiene la herramienta.</p>
+    <table class="ds-tabla">
+      <thead><tr><th>Rol</th><th>Chat</th><th>Dominios</th><th>Tablero</th><th>Usuarios</th></tr></thead>
+      <tbody>
+        <tr><td><b>consulta</b></td><td>sí</td><td>analítica y documentación</td><td>no</td><td>no</td></tr>
+        <tr><td><b>gestor</b></td><td>sí</td><td>los cuatro</td><td>sí</td><td>no</td></tr>
+        <tr><td><b>admin</b></td><td>sí</td><td>los cuatro</td><td>sí</td><td>sí</td></tr>
+      </tbody>
+    </table>
+    <p class="ds-ayuda" style="margin-top:.6rem">
+      La sesión dura 8 horas y se cierra con <b>Salir</b>. Si un admin da de baja tu
+      usuario, tu sesión se corta en el acto.
+    </p>
+  </section>
+
+  <!-- ------------------------------------------------------------------ -->
+  <section id="voz">
+    <h2>📱 Versión móvil y chat de voz</h2>
+    <p>
+      <a href="/movil">La versión móvil</a> tiene alcance reducido a propósito: solo el chat,
+      pensado para consultar de paso. Suma <b>entrada y salida por voz</b> — el botón 🎤 dicta
+      la consulta y la respuesta se lee en voz alta.
+    </p>
+    <p class="ds-ayuda">
+      La voz usa la Web Speech API del navegador: anda en Chrome y Edge de escritorio y
+      Android; en iOS el dictado depende de la versión de Safari. Si no está disponible,
+      el chat sigue funcionando escrito.
+    </p>
+  </section>
+
+  <!-- ------------------------------------------------------------------ -->
+  <section id="limites">
+    <h2>⚠️ Qué no hace</h2>
+    <ul>
+      <li><b>Solo responde sobre los cuatro dominios.</b> Ante una consulta fuera de alcance
+        (el clima, por ejemplo) lo dice en lugar de improvisar.</li>
+      <li><b>Solo lee, no escribe.</b> No emite facturas, no asigna personas ni modifica
+        documentos: es consulta y análisis.</li>
+      <li><b>Los datos son sintéticos</b> — es una demostración, no los sistemas productivos.</li>
+      <li id="nota-demo" hidden><b>Estás en modo demo</b> (sin clave de API): el asistente
+        resuelve un dominio por consulta. Las preguntas que cruzan dos dominios a la vez
+        requieren el modelo real.</li>
+    </ul>
+    <p class="ds-ayuda">
+      El indicador de la barra superior muestra el modo activo: <b>demo</b> (simulado, sin
+      llamadas externas) o <b>live</b> (modelo real).
+    </p>
+  </section>
+</main>
+
+<script src="/ds.js"></script>
+<script>
+  montarAppbar("/ayuda").then(sesion => {
+    if (!sesion) return;
+    // Los bloques por rol nacen ocultos: solo se revelan los que corresponden, para
+    // que la ayuda no prometa dominios que el asistente no va a poder consultar.
+    document.querySelectorAll("[data-rol]").forEach(el => {
+      el.hidden = !el.dataset.rol.split(" ").includes(sesion.rol);
+    });
+    if (sesion.modo === "demo") document.getElementById("nota-demo").hidden = false;
+  });
+</script>
+</body>
+</html>

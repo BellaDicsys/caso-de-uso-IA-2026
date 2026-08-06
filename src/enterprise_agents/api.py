@@ -196,6 +196,11 @@ def crear_app(settings: Settings | None = None) -> FastAPI:
     def chat(request: Request):
         return _pagina(request, "index.html")
 
+    @app.get("/ayuda", response_class=HTMLResponse)
+    def ayuda(request: Request):
+        """Ayuda e inducción al usuario: qué preguntar, cómo leer el tablero, roles."""
+        return _pagina(request, "ayuda.html")
+
     @app.get("/movil", response_class=HTMLResponse)
     def movil(request: Request):
         """Versión móvil: alcance reducido (solo chat) con entrada/salida por voz."""

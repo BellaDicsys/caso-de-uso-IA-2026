@@ -1,5 +1,7 @@
 """Tests de la API HTTP (FastAPI) en modo mock, con autenticación."""
 
+import re
+
 from conftest import entrar
 
 
@@ -11,7 +13,7 @@ def test_salud_es_publico_y_no_filtra_el_modelo(cliente):
 
 
 def test_paginas_protegidas_redirigen_a_login(cliente):
-    for ruta in ("/", "/movil", "/tablero", "/usuarios"):
+    for ruta in ("/", "/movil", "/ayuda", "/tablero", "/usuarios"):
         respuesta = cliente.get(ruta, follow_redirects=False)
         assert respuesta.status_code == 303, ruta
         assert respuesta.headers["location"].startswith("/login"), ruta
@@ -35,6 +37,24 @@ def test_movil_incluye_chat_de_voz(cliente):
     assert respuesta.status_code == 200
     assert "SpeechRecognition" in respuesta.text
     assert "speechSynthesis" in respuesta.text
+
+
+def test_ayuda_disponible_para_todos_los_roles(cliente):
+    """La inducción al usuario no depende del rol: los tres deben poder leerla."""
+    for usuario in ("consulta", "gestion", "admin"):
+        entrar(cliente, usuario)
+        respuesta = cliente.get("/ayuda")
+        assert respuesta.status_code == 200, usuario
+        assert "Ayuda y primeros pasos" in respuesta.text
+
+
+def test_ayuda_oculta_por_defecto_los_bloques_por_rol(cliente):
+    """Se sirven ocultos y el cliente revela solo los del rol: nadie ve de más."""
+    entrar(cliente, "consulta")
+    texto = cliente.get("/ayuda").text
+    bloques = re.findall(r'data-rol="[^"]+"(.{0,8})', texto)
+    assert bloques, "la ayuda debería tener bloques segmentados por rol"
+    assert all(resto.startswith(" hidden") for resto in bloques)
 
 
 def test_consultar_devuelve_respuesta_del_orquestador(cliente):

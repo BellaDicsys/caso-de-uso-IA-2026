@@ -8,6 +8,10 @@
 <style>
   main { max-width: 780px; width: 100%; margin: 0 auto; padding: 1.2rem 1rem 7.5rem; }
   .sugerencias { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0; }
+  #induccion { margin: 1rem 0; }
+  #induccion h2 { font-size: .95rem; margin: 0 0 .5rem; }
+  #induccion ol { margin: 0 0 .8rem 1.1rem; font-size: .85rem; line-height: 1.65; }
+  #induccion .acciones { display: flex; gap: .5rem; align-items: center; }
   form.entrada {
     position: fixed; bottom: 0; left: 0; right: 0; background: var(--ds-superficie);
     border-top: 1px solid var(--ds-borde); padding: .9rem 1rem; box-shadow: var(--ds-elev-2);
@@ -24,12 +28,28 @@
   <span id="ds-usuario"></span>
   <a class="ds-tab" href="/movil" aria-label="versión móvil con voz"
      title="versión móvil con voz">📱</a>
+  <a class="ds-tab" href="/ayuda" aria-label="ayuda y primeros pasos"
+     title="ayuda y primeros pasos">❔</a>
   <button class="ds-tema" onclick="alternarTema()" aria-label="cambiar tema"></button>
   <button class="ds-btn texto" onclick="salir()">Salir</button>
 </header>
 <main id="conversacion">
   <div class="msj ds-aparece"><div class="burbuja">Hola, soy el asistente de gestión empresarial.
 Puedo responder sobre <b>ventas y proyectos</b>, <b>cobranzas</b>, <b>documentación interna</b> y <b>personal</b>. Probá una consulta:</div></div>
+  <div class="ds-tarjeta" id="induccion" hidden>
+    <h2>👋 Cómo aprovecharlo en un minuto</h2>
+    <ol>
+      <li>Preguntá en lenguaje natural sobre <b>ventas y proyectos</b>, <b>cobranzas</b>,
+        <b>documentación interna</b> y <b>personal</b>.</li>
+      <li>Cada respuesta cita de dónde salió el dato; si no está, el asistente lo dice
+        en lugar de inventarlo.</li>
+      <li>Tu rol define qué dominios puede consultar en tu nombre.</li>
+    </ol>
+    <div class="acciones">
+      <button class="ds-btn primario" id="induccion-ok">Entendido</button>
+      <a class="ds-btn texto" href="/ayuda">Ver la ayuda completa</a>
+    </div>
+  </div>
   <div class="sugerencias" id="sugerencias">
     <button class="ds-btn">¿Cuánto facturamos y a qué clientes?</button>
     <button class="ds-btn">¿Qué facturas vencidas hay que reclamar?</button>
@@ -54,6 +74,15 @@ Puedo responder sobre <b>ventas y proyectos</b>, <b>cobranzas</b>, <b>documentac
   const boton = document.getElementById("boton");
 
   montarAppbar("/");
+
+  // Inducción: se muestra hasta que el usuario la da por vista.
+  const induccion = document.getElementById("induccion");
+  induccion.hidden = localStorage.getItem("eas-induccion") === "vista";
+  document.getElementById("induccion-ok").addEventListener("click", () => {
+    localStorage.setItem("eas-induccion", "vista");
+    induccion.hidden = true;
+    snackbar("Podés volver a la ayuda cuando quieras desde el menú.");
+  });
 
   document.getElementById("sugerencias").addEventListener("click", e => {
     const b = e.target.closest("button");
@@ -88,6 +117,14 @@ Puedo responder sobre <b>ventas y proyectos</b>, <b>cobranzas</b>, <b>documentac
       entrada.focus();
     }
   });
+
+  // Los ejemplos de la ayuda abren el chat con la consulta ya cargada (?q=...).
+  const consultaInicial = new URLSearchParams(location.search).get("q");
+  if (consultaInicial) {
+    history.replaceState(null, "", "/");   // no dejar la pregunta pegada en la URL
+    entrada.value = consultaInicial;
+    formulario.requestSubmit();
+  }
 </script>
 </body>
 </html>
