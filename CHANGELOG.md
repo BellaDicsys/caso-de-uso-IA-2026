@@ -8,6 +8,12 @@ automáticamente desde los *Conventional Commits* (ver
 Las versiones anteriores a la puesta en marcha del versionado automático se
 reconstruyeron a partir del historial.
 
+## 0.5.1 — 2026-08-06
+
+### Correcciones
+
+- **ayuda**: corrige la afirmación de que el asistente mantiene el hilo
+
 ## 0.5.0 — 2026-08-06
 
 ### Nuevas funcionalidades
