@@ -46,9 +46,16 @@ def _crear_llm(settings: Settings, forzar_live: bool) -> tuple[LLMClient, str]:
     return MockLLMClient(), "demo (mock, sin llamadas externas)"
 
 
-def _responder(pregunta: str, llm: LLMClient, settings: Settings) -> str:
+def _responder(pregunta: str, llm: LLMClient, settings: Settings, traza: bool = False) -> str:
+    """Responde una consulta; con `traza`, imprime además el árbol de ejecución."""
+    from enterprise_agents import trazas
+
     orquestador = crear_orquestador(llm, settings)
-    return orquestador.run(pregunta)
+    with trazas.capturar(pregunta) as registro:
+        registro.respuesta = orquestador.run(pregunta)
+    if traza:
+        print(registro.imprimir(), end="\n\n")
+    return registro.respuesta
 
 
 def _comando_version(args: argparse.Namespace) -> int:
@@ -151,10 +158,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.comando == "demo":
         for i, pregunta in enumerate(ESCENARIOS_DEMO, 1):
             print(f"=== Escenario {i}: {pregunta}")
-            print(_responder(pregunta, llm, settings))
+            print(_responder(pregunta, llm, settings, traza=args.verbose))
             print()
     else:
-        print(_responder(args.pregunta, llm, settings))
+        print(_responder(args.pregunta, llm, settings, traza=args.verbose))
 
     return 0
 

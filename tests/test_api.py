@@ -110,3 +110,31 @@ def test_tablero_sin_rol_redirige_al_chat(cliente):
     respuesta = cliente.get("/tablero", follow_redirects=False)
     assert respuesta.status_code == 303
     assert respuesta.headers["location"].startswith("/?error")
+
+
+# --- Observabilidad ---------------------------------------------------------
+
+
+def test_la_consulta_queda_registrada_en_las_trazas(cliente):
+    entrar(cliente, "gestion")
+    cliente.post("/consultar", json={"pregunta": "¿Qué facturas vencidas hay?"})
+    datos = cliente.get("/trazas/api").json()
+    assert datos["resumen"]["consultas"] >= 1
+    traza = datos["trazas"][0]
+    assert traza["consulta"] == "¿Qué facturas vencidas hay?"
+    assert any(s["herramienta"] == "facturas_vencidas" for s in traza["spans"])
+    # La jerarquía llega al visor: la herramienta va anidada bajo la delegación.
+    niveles = {s["herramienta"]: s["nivel"] for s in traza["spans"]}
+    assert niveles["facturas_vencidas"] > niveles["delegar_analista_finanzas"]
+
+
+def test_las_trazas_son_de_gestor_y_admin(cliente):
+    entrar(cliente, "consulta")
+    assert cliente.get("/trazas/api").status_code == 403
+    assert cliente.get("/trazas", follow_redirects=False).status_code == 303
+
+
+def test_el_limite_de_trazas_se_acota(cliente):
+    entrar(cliente, "admin")
+    assert cliente.get("/trazas/api?limite=999").status_code == 200
+    assert cliente.get("/trazas/api?limite=0").status_code == 200

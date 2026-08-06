@@ -72,11 +72,14 @@ class Agent:
             return {"content": f"Herramienta desconocida: {nombre}", "is_error": True}
         # La traza registra qué devolvió cada herramienta; si nadie está
         # capturando, `registrar` no hace nada y no cuesta nada.
-        with trazas.registrar(self.name, nombre, argumentos) as caja:
+        with trazas.registrar(self.name, nombre, argumentos) as salida:
             try:
-                caja[0] = tool.run(argumentos)
-                return {"content": caja[0]}
+                salida.resultado = tool.run(argumentos)
+                return {"content": salida.resultado}
             except Exception as exc:  # noqa: BLE001 - el error vuelve al modelo
                 logger.exception("[%s] error ejecutando %s", self.name, nombre)
-                caja[0] = f"Error al ejecutar {nombre}: {exc}"
-                return {"content": caja[0], "is_error": True}
+                salida.resultado = f"Error al ejecutar {nombre}: {exc}"
+                # La excepción no se propaga —vuelve al modelo como tool_result—
+                # así que hay que marcarla para que la traza la registre.
+                salida.error = True
+                return {"content": salida.resultado, "is_error": True}

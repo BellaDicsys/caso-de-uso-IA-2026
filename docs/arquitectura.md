@@ -122,3 +122,4 @@ Las decisiones estructurales están documentadas como ADRs en [`docs/adr/`](adr/
 - [ADR-0008 — Ruteo semántico de herramientas en el cliente simulado](adr/0008-ruteo-semantico-en-el-cliente-mock.md)
 - [ADR-0009 — Arnés de evaluación y verificación de fundamentación](adr/0009-evaluacion-y-fundamentacion.md)
 - [ADR-0010 — Defensa en profundidad contra inyección de prompt](adr/0010-seguridad-inyeccion-de-prompt.md)
+- [ADR-0011 — Observabilidad: trazas de ejecución y estimación de tokens](adr/0011-observabilidad-y-trazas.md)

@@ -24,7 +24,7 @@ from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from pydantic import BaseModel, Field
 
-from enterprise_agents import __version__
+from enterprise_agents import __version__, trazas
 from enterprise_agents.auth import (
     DURACION_SESION_SEG,
     ROLES_TABLERO,
@@ -40,6 +40,7 @@ from enterprise_agents.llm.base import LLMClient
 from enterprise_agents.llm.mock_client import MockLLMClient
 from enterprise_agents.metrics import calcular_metricas
 from enterprise_agents.orchestrator import crear_orquestador
+from enterprise_agents.registro import RegistroTrazas
 
 _STATIC = Path(__file__).parent / "static"
 _COOKIE = "sesion"
@@ -86,6 +87,7 @@ def crear_app(settings: Settings | None = None) -> FastAPI:
     llm, modo = _crear_llm(settings)
     sesiones = AlmacenSesiones()
     intentos = ControlIntentos()
+    registro = RegistroTrazas()
     # Los agentes son stateless: se construye un orquestador por rol una sola
     # vez y se reusa entre requests (evita rearmarlo en cada consulta).
     orquestadores = {
@@ -211,7 +213,27 @@ def crear_app(settings: Settings | None = None) -> FastAPI:
         sesion = _requerir(request)
         # RBAC a nivel de herramienta: el rol define qué dominios puede consultar.
         orquestador = orquestadores[sesion["rol"]]
-        return Respuesta(respuesta=orquestador.run(consulta.pregunta), modo=modo)
+        # Toda consulta queda trazada: sin esto no hay forma de auditar por qué
+        # el asistente respondió lo que respondió (ver ADR-0011).
+        with trazas.capturar(consulta.pregunta, modo=modo) as traza:
+            traza.respuesta = orquestador.run(consulta.pregunta)
+        registro.agregar(traza)
+        return Respuesta(respuesta=traza.respuesta, modo=modo)
+
+    # --- Observabilidad -----------------------------------------------------
+
+    @app.get("/trazas", response_class=HTMLResponse)
+    def trazas_pagina(request: Request):
+        """Visor de trazas: qué hizo el sistema en cada consulta reciente."""
+        return _pagina(request, "trazas.html", ROLES_TABLERO)
+
+    @app.get("/trazas/api")
+    def trazas_datos(request: Request, limite: int = 20) -> dict:
+        _requerir(request, ROLES_TABLERO)
+        return {
+            "resumen": registro.resumen(),
+            "trazas": [t.a_dict() for t in registro.recientes(max(1, min(limite, 50)))],
+        }
 
     # --- Tablero ------------------------------------------------------------
 
@@ -263,8 +285,9 @@ def crear_app(settings: Settings | None = None) -> FastAPI:
         sesiones.cerrar_de_usuario(usuario)
         return {"eliminado": usuario}
 
-    # Referencia interna para tests (evita repetir el login en cada uno).
+    # Referencias internas para tests (evita repetir el login en cada uno).
     app.state.sesiones = sesiones
+    app.state.registro = registro
     return app
 
 

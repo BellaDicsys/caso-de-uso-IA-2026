@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trazas — Enterprise Agent Suite</title>
+<link rel="stylesheet" href="/ds.css">
+<style>
+  main { max-width: 1000px; margin: 0 auto; padding: 1.2rem 1rem 4rem; }
+  .resumen { display: flex; flex-wrap: wrap; gap: .8rem; margin-bottom: 1.4rem; }
+  .metrica {
+    flex: 1 1 150px; background: var(--ds-superficie); border: 1px solid var(--ds-borde);
+    border-radius: 12px; padding: .8rem 1rem;
+  }
+  .metrica .valor { font-size: 1.45rem; font-weight: 600; line-height: 1.2; }
+  .metrica .rotulo { font-size: .72rem; color: var(--ds-tinta-suave); text-transform: uppercase;
+                     letter-spacing: .04em; }
+  .traza { margin-bottom: .9rem; }
+  .traza summary {
+    cursor: pointer; list-style: none; display: flex; gap: .6rem; align-items: baseline;
+    padding: .7rem .9rem; border-radius: 10px; background: var(--ds-superficie);
+    border: 1px solid var(--ds-borde);
+  }
+  .traza summary::-webkit-details-marker { display: none; }
+  .traza summary:hover { border-color: var(--ds-primario); }
+  .traza[open] summary { border-radius: 10px 10px 0 0; }
+  .consulta { flex: 1; font-size: .9rem; overflow: hidden; text-overflow: ellipsis;
+              white-space: nowrap; }
+  .medidas { font-size: .74rem; color: var(--ds-tinta-suave); white-space: nowrap; }
+  .cuerpo { border: 1px solid var(--ds-borde); border-top: 0; border-radius: 0 0 10px 10px;
+            padding: .9rem; background: var(--ds-superficie-2); }
+  .span { display: flex; gap: .6rem; align-items: baseline; padding: .35rem 0;
+          font-size: .84rem; border-bottom: 1px dashed var(--ds-borde); }
+  .span:last-child { border-bottom: 0; }
+  .span .nombre { font-family: ui-monospace, monospace; font-size: .82rem; }
+  .span .agente { font-size: .72rem; color: var(--ds-tinta-suave); }
+  .span .salida { flex: 1; color: var(--ds-tinta-suave); font-size: .78rem;
+                  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .span.error .nombre { color: var(--ds-critico); }
+  .barra { height: 4px; border-radius: 2px; background: var(--ds-primario); min-width: 2px; }
+  .respuesta { margin-top: .8rem; padding: .7rem .9rem; background: var(--ds-superficie);
+               border-radius: 8px; font-size: .84rem; white-space: pre-wrap;
+               max-height: 220px; overflow: auto; }
+  .vacio { text-align: center; color: var(--ds-tinta-suave); padding: 3rem 1rem; font-size: .9rem; }
+  .nota { font-size: .76rem; color: var(--ds-tinta-suave); margin-top: 1.5rem; }
+</style>
+</head>
+<body>
+<header class="ds-appbar">
+  <h1>🧭 Enterprise Agent Suite</h1>
+  <nav></nav>
+  <span class="ds-espacio"></span>
+  <span id="ds-usuario"></span>
+  <button class="ds-tema" onclick="alternarTema()" aria-label="cambiar tema"></button>
+  <button class="ds-btn texto" onclick="salir()">Salir</button>
+</header>
+
+<main>
+  <h2 style="font-size:1.05rem;margin:.4rem 0 .3rem">Trazas de ejecución</h2>
+  <p style="font-size:.85rem;color:var(--ds-tinta-suave);margin:0 0 1.2rem">
+    Qué hizo el sistema en cada consulta: qué agente delegó en cuál, qué herramientas
+    se ejecutaron, cuánto tardaron y cuánto contexto aportaron.
+  </p>
+
+  <div class="resumen" id="resumen"></div>
+  <div id="lista"></div>
+</main>
+
+<script src="/ds.js"></script>
+<script>
+  montarAppbar("/trazas");
+
+  const fmtTokens = (n) => n < 1000 ? String(n) : (n / 1000).toFixed(1) + "k";
+
+  function tarjeta(valor, rotulo) {
+    return `<div class="metrica"><div class="valor">${esc(valor)}</div>` +
+           `<div class="rotulo">${esc(rotulo)}</div></div>`;
+  }
+
+  function filaSpan(span, msMaximo) {
+    // La barra es proporcional al span más lento de esa traza: sirve para ver de
+    // un vistazo dónde se fue el tiempo, que es la pregunta que uno se hace.
+    const ancho = msMaximo > 0 ? Math.max(2, (span.milisegundos / msMaximo) * 100) : 2;
+    const sangria = span.nivel * 1.2;
+    return `<div class="span${span.error ? " error" : ""}" style="padding-left:${sangria}rem">
+      <span class="nombre">${span.error ? "✗" : "•"} ${esc(span.herramienta)}</span>
+      <span class="agente">${esc(span.agente)}</span>
+      <span class="salida">${esc(span.resumen)}</span>
+      <span class="medidas">${span.milisegundos} ms · ~${fmtTokens(span.tokens)} tok</span>
+      <span class="barra" style="width:${ancho}px"></span>
+    </div>`;
+  }
+
+  function tarjetaTraza(traza, indice) {
+    const msMaximo = Math.max(1, ...traza.spans.map(s => s.milisegundos));
+    const spans = traza.spans.map(s => filaSpan(s, msMaximo)).join("");
+    const herramientas = traza.spans.length;
+    return `<details class="traza"${indice === 0 ? " open" : ""}>
+      <summary>
+        <span class="consulta">${esc(traza.consulta)}</span>
+        <span class="medidas">${herramientas} paso${herramientas === 1 ? "" : "s"} ·
+          ${traza.milisegundos} ms · ~${fmtTokens(traza.tokens_contexto)} tok
+          ${traza.hubo_error ? " · <b>error</b>" : ""}</span>
+      </summary>
+      <div class="cuerpo">
+        ${spans || '<div class="vacio">Ninguna herramienta se ejecutó en esta consulta.</div>'}
+        <div class="respuesta">${esc(traza.respuesta)}</div>
+      </div>
+    </details>`;
+  }
+
+  async function cargar() {
+    const datos = await pedir("/trazas/api?limite=20").catch(() => null);
+    if (!datos) return;
+
+    const r = datos.resumen;
+    document.getElementById("resumen").innerHTML =
+      tarjeta(r.consultas, "consultas registradas") +
+      tarjeta(r.ms_promedio + " ms", "latencia promedio") +
+      tarjeta("~" + fmtTokens(r.tokens_promedio), "contexto promedio") +
+      tarjeta(r.con_error, "con error");
+
+    const lista = document.getElementById("lista");
+    if (!datos.trazas.length) {
+      lista.innerHTML = '<div class="vacio">Todavía no hay consultas registradas. ' +
+        'Hacé una pregunta en el chat y volvé.</div>';
+      return;
+    }
+    lista.innerHTML = datos.trazas.map(tarjetaTraza).join("");
+  }
+
+  cargar();
+  // Refresco encadenado y pausado con la pestaña oculta, igual que el tablero:
+  // un setInterval seguiría consultando de fondo y podría solapar pedidos.
+  function programar() {
+    setTimeout(async () => { if (!document.hidden) await cargar(); programar(); }, 8000);
+  }
+  programar();
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) cargar(); });
+</script>
+<p class="nota" style="max-width:1000px;margin:0 auto;padding:0 1rem 2rem">
+  Los tokens son <b>una estimación</b> calculada localmente (ver <code>tokens.py</code>):
+  sirven para comparar consultas entre sí, no como medida de facturación. Las trazas se
+  guardan en memoria y se pierden al reiniciar el servidor —decisión deliberada, ver ADR-0011.
+</p>
+</body>
+</html>

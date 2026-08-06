@@ -34,10 +34,11 @@ flowchart TD
 | Design system | propio (`ds.css` + `ds.js`) | tokens estilo Material 3, tema claro/oscuro, microinteracciones |
 | Tablero | SVG propio | KPIs + alertas tempranas + 3 gráficos, paleta validada para daltonismo |
 | Móvil | Web Speech API | chat de voz: dictado (SpeechRecognition) + respuesta hablada (speechSynthesis) |
-| Calidad | pytest + pytest-cov + ruff | 245 tests, cobertura 94% (umbral 85% en CI), lint y formato |
+| Calidad | pytest + pytest-cov + ruff | 269 tests, cobertura 94% (umbral 85% en CI), lint y formato |
 | Recuperación | propia (`recuperacion/`) | híbrida BM25 + espacio latente (SVD del corpus), fusión RRF; sin pesos preentrenados |
 | Evaluación | propia (`evaluacion/`) | 55 consultas etiquetadas, recall/MRR/nDCG con umbrales en CI y verificador de fundamentación |
 | Seguridad de agentes | propia (`seguridad/`) | saneamiento del contenido recuperado + suite de 7 ataques por inyección de prompt |
+| Observabilidad | propia (`trazas.py`) | árbol de spans por consulta con tiempos y tokens estimados, visor web en `/trazas` |
 | Versionado | propio (`versionado.py`) | semver automático desde Conventional Commits: changelog, tag y release en CI |
 
 ## Superficies de uso
@@ -47,10 +48,12 @@ flowchart TD
 - **Versión móvil** (`/movil`) — alcance reducido (solo chat) con **entrada y salida por voz**
 - **Tablero de control** (`/tablero`) — KPIs y **alertas tempranas** por severidad, con
   gráficos de ventas, deuda por cliente y consumo de horas por proyecto (roles gestor/admin)
+- **Trazas** (`/trazas`) — qué hizo el sistema en cada consulta: árbol de delegaciones y
+  herramientas, con tiempos y tokens estimados (roles gestor/admin)
 - **Gestión de usuarios** (`/usuarios`) — alta/baja y roles (rol admin)
 - **Ayuda e inducción** (`/ayuda`) — qué preguntar, cómo leer el tablero y qué puede
   cada rol; sensible al rol de quien la lee
-- **API HTTP** — `POST /consultar`, `GET /metricas`, `GET /salud` y autenticación
+- **API HTTP** — `POST /consultar`, `GET /metricas`, `GET /trazas/api`, `GET /salud` y autenticación
 
 ## Inicio rápido
 
@@ -97,7 +100,7 @@ enterprise-agents ask --live "¿Cuánto facturamos a Banco Andino y quién puede
 ## Verificación
 
 ```bash
-python -m pytest --cov   # 245 tests + cobertura (94 %)
+python -m pytest --cov   # 269 tests + cobertura (94 %)
 ruff check .             # lint
 ruff format --check .    # formato
 ```
@@ -165,11 +168,13 @@ GitHub con las notas generadas. Fundamento en
 │   ├── evals.py               # Set de evaluación de escenarios de negocio
 │   ├── evaluacion/            # Métricas de recuperación + verificador de fundamentación
 │   ├── seguridad/             # Detección y saneamiento de inyecciones + suite de ataques
-│   ├── trazas.py              # Registro de herramientas ejecutadas por consulta
+│   ├── trazas.py              # Trazas jerárquicas de ejecución (spans, tiempos, tokens)
+│   ├── tokens.py              # Estimador de tokens sin llamadas externas
+│   ├── registro.py            # Buffer en memoria de las últimas trazas
 │   ├── versionado.py          # Versionado automático (Conventional Commits → semver)
 │   ├── cli.py                 # CLI: demo / ask / eval / serve / version
 │   └── static/                # DS propio (ds.css/ds.js) + páginas (chat, tablero, usuarios, móvil, ayuda, login)
-└── tests/                     # Suite de tests (245, sin llamadas externas)
+└── tests/                     # Suite de tests (269, sin llamadas externas)
 ```
 
 ## Documentación
