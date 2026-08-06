@@ -28,13 +28,13 @@ flowchart TD
 |---|---|---|
 | Lenguaje | Python ≥ 3.10 | probado en 3.10 y 3.12 (CI) |
 | Modelo de IA | Claude (`claude-opus-5`) | vía SDK oficial `anthropic`, tool use, razonamiento adaptativo |
-| Núcleo agéntico | propio | orquestador + 4 especialistas, capa `LLMClient` con cliente real y mock |
+| Núcleo agéntico | propio | orquestador + 4 especialistas, capa `LLMClient` con cliente real y mock (ruteo semántico) |
 | API / web | FastAPI + uvicorn | REST (`/consultar`, `/metricas`), páginas protegidas por sesión |
 | Autenticación | propia | PBKDF2-HMAC-SHA256, cookie de sesión HttpOnly, RBAC de 3 roles |
 | Design system | propio (`ds.css` + `ds.js`) | tokens estilo Material 3, tema claro/oscuro, microinteracciones |
 | Tablero | SVG propio | KPIs + alertas tempranas + 3 gráficos, paleta validada para daltonismo |
 | Móvil | Web Speech API | chat de voz: dictado (SpeechRecognition) + respuesta hablada (speechSynthesis) |
-| Calidad | pytest + pytest-cov + ruff | 143 tests, cobertura 93% (umbral 85% en CI), lint y formato |
+| Calidad | pytest + pytest-cov + ruff | 169 tests, cobertura 94% (umbral 85% en CI), lint y formato |
 | Recuperación | propia (`recuperacion/`) | híbrida BM25 + espacio latente (SVD del corpus), fusión RRF; sin pesos preentrenados |
 | Versionado | propio (`versionado.py`) | semver automático desde Conventional Commits: changelog, tag y release en CI |
 
@@ -91,7 +91,7 @@ enterprise-agents ask --live "¿Cuánto facturamos a Banco Andino y quién puede
 ## Verificación
 
 ```bash
-python -m pytest --cov   # 143 tests + cobertura (93 %)
+python -m pytest --cov   # 169 tests + cobertura (94 %)
 ruff check .             # lint
 ruff format --check .    # formato
 ```
@@ -143,7 +143,7 @@ GitHub con las notas generadas. Fundamento en
 │   ├── versionado.py          # Versionado automático (Conventional Commits → semver)
 │   ├── cli.py                 # CLI: demo / ask / eval / serve / version
 │   └── static/                # DS propio (ds.css/ds.js) + páginas (chat, tablero, usuarios, móvil, ayuda, login)
-└── tests/                     # Suite de tests (143, sin llamadas externas)
+└── tests/                     # Suite de tests (169, sin llamadas externas)
 ```
 
 ## Documentación

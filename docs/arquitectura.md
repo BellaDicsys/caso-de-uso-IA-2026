@@ -119,3 +119,4 @@ Las decisiones estructurales están documentadas como ADRs en [`docs/adr/`](adr/
 - [ADR-0005 — Autenticación por sesión y roles](adr/0005-autenticacion-y-roles.md)
 - [ADR-0006 — Versionado automático desde los mensajes de commit](adr/0006-versionado-automatico.md)
 - [ADR-0007 — Recuperación híbrida con embeddings derivados del corpus](adr/0007-recuperacion-hibrida-sin-modelo-externo.md)
+- [ADR-0008 — Ruteo semántico de herramientas en el cliente simulado](adr/0008-ruteo-semantico-en-el-cliente-mock.md)

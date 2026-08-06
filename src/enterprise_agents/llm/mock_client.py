@@ -1,9 +1,16 @@
-"""Cliente simulado para demos offline y tests (ver ADR-0003).
+"""Cliente simulado para demos offline y tests (ver ADR-0003 y ADR-0008).
 
-No llama a ningún servicio externo: elige herramientas por palabras clave y
-resume los resultados de forma determinística. Permite ejecutar la demo y la
-suite de tests sin una clave de API, y hace reproducible el flujo agéntico
-completo (selección de herramienta → ejecución → síntesis).
+No llama a ningún servicio externo: elige la herramienta por **similitud
+semántica** contra su descripción y sus enunciados de ejemplo —el mismo motor
+híbrido que usa la recuperación documental, aplicado a herramientas en vez de
+pasajes— y resume los resultados de forma determinística. Permite ejecutar la
+demo y la suite de tests sin una clave de API, y hace reproducible el flujo
+agéntico completo (selección de herramienta → ejecución → síntesis).
+
+Hasta la versión anterior el ruteo era una tabla de prefijos mantenida a mano,
+que había que sincronizar con cada herramienta nueva y que ya había producido
+errores documentados en la auditoría. Ahora la elección se apoya en el mismo
+texto que orienta al modelo real.
 
 Limitación conocida (ver ADR-0003): el mock ejecuta una sola delegación por
 consulta; las consultas que cruzan dominios solo las resuelve el modelo real
@@ -15,7 +22,9 @@ from __future__ import annotations
 from typing import Any
 
 from enterprise_agents.llm.base import LLMReply
-from enterprise_agents.text import coincide_palabra, coincide_prefijo, normalizar
+from enterprise_agents.llm.router import RouterSemantico
+from enterprise_agents.recuperacion.motor import motor
+from enterprise_agents.text import coincide_palabra, normalizar
 
 # Habilidades reconocidas en los datos de ejemplo, para inferir argumentos.
 _HABILIDADES_CONOCIDAS = [
@@ -35,36 +44,27 @@ _HABILIDADES_CONOCIDAS = [
     "scrum",
 ]
 
-# Keywords por dominio, definidas una sola vez y reusadas por la herramienta de
-# delegación del orquestador y por las herramientas del especialista, para que
-# ambos niveles enruten igual.
-_KW_ANALITICA = ["venta", "factur", "ingreso", "proyecto"]
-_KW_FINANZAS = ["cobranza", "cobrar", "vencid", "deuda", "adeuda", "impaga"]
-_KW_DOCUMENTAL = ["politica", "vacacion", "documento", "contrato", "onboarding", "sla", "licencia"]
-_KW_PERSONAL = ["empleado", "personal", "habilidad", "perfil", "equipo", "disponib"]
 
-# Palabras clave por herramienta. Se comparan como PREFIJO DE PALABRA (no
-# subcadena libre): 'factur' cubre 'facturamos'/'facturación', pero 'sql' no
-# matchea dentro de 'postgresql' ni 'deuda' dentro de otra palabra.
-_KEYWORDS: dict[str, list[str]] = {
-    "delegar_analista_datos": [*_KW_ANALITICA, "avance", "hora", "riesgo"],
-    "delegar_analista_finanzas": [*_KW_FINANZAS, "reclamar", "mora"],
-    "delegar_gestor_documental": _KW_DOCUMENTAL,
-    "delegar_gestor_personal": [*_KW_PERSONAL, "asignar", "asignacion"],
-    "resumen_ventas": ["venta", "factur", "ingreso", "cliente"],
-    "avance_proyectos": ["proyecto", "avance", "hora", "riesgo", "estado"],
-    "estado_cobranzas": ["cobranza", "cobrar", "total"],
-    "facturas_vencidas": ["vencid", "mora", "reclamar", "antigua", "impaga"],
-    "deuda_por_cliente": ["deuda", "adeuda", "cliente"],
-    "buscar_documentos": _KW_DOCUMENTAL,
-    "leer_documento": ["leer", "texto completo"],
-    "buscar_por_habilidad": ["habilidad", "sabe", "perfil", *_HABILIDADES_CONOCIDAS],
-    "disponibilidad_equipo": ["disponib", "asignar", "libre", "capacidad", "equipo"],
-}
+def _texto_de_intencion(tool: dict[str, Any]) -> str:
+    """Texto de ruteo a partir del esquema que recibe el cliente.
+
+    `ToolDef.texto_de_intencion()` incluye además los enunciados de ejemplo, que
+    no viajan en el esquema de la API porque el modelo real no los usa. El
+    orquestador los inyecta al construir el agente (ver `Agent.esquemas`).
+    """
+    partes = [tool["name"].replace("_", " "), tool.get("description", "")]
+    partes.extend(tool.get("ejemplos", ()))
+    for propiedad in tool.get("input_schema", {}).get("properties", {}).values():
+        if propiedad.get("description"):
+            partes.append(propiedad["description"])
+    return " ".join(partes)
 
 
 class MockLLMClient:
     """Implementación determinística de `LLMClient` sin llamadas externas."""
+
+    def __init__(self) -> None:
+        self._routers: dict[tuple[str, ...], RouterSemantico] = {}
 
     def complete(
         self,
@@ -131,20 +131,27 @@ class MockLLMClient:
                     return "\n".join(textos)
         return ""
 
+    def _router(self, tools: list[dict[str, Any]]) -> RouterSemantico:
+        """Router del conjunto de herramientas ofrecido, construido una sola vez.
+
+        Cada agente ofrece un conjunto distinto —el orquestador solo delegaciones,
+        cada especialista las suyas— y el rol puede recortarlo todavía más, así
+        que la clave de caché es el conjunto de nombres.
+        """
+        clave = tuple(sorted(t["name"] for t in tools))
+        router = self._routers.get(clave)
+        if router is None:
+            router = RouterSemantico({t["name"]: _texto_de_intencion(t) for t in tools})
+            self._routers[clave] = router
+        return router
+
     def _elegir_herramienta(
         self, texto: str, tools: list[dict[str, Any]]
     ) -> tuple[str, dict[str, Any]] | None:
-        texto_norm = normalizar(texto)
-        mejor: tuple[int, str] | None = None
-        for tool in tools:
-            nombre = tool["name"]
-            puntaje = sum(1 for kw in _KEYWORDS.get(nombre, []) if coincide_prefijo(kw, texto_norm))
-            if puntaje > 0 and (mejor is None or puntaje > mejor[0]):
-                mejor = (puntaje, nombre)
-        if mejor is None:
+        eleccion = self._router(tools).elegir(texto)
+        if eleccion is None:
             return None
-        nombre = mejor[1]
-        return nombre, self._armar_argumentos(nombre, texto, texto_norm)
+        return eleccion.nombre, self._armar_argumentos(eleccion.nombre, texto, normalizar(texto))
 
     @staticmethod
     def _armar_argumentos(nombre: str, texto: str, texto_norm: str) -> dict[str, Any]:
@@ -161,5 +168,10 @@ class MockLLMClient:
             palabras = [p for p in texto_norm.split() if len(p) >= 3]
             return {"habilidad": palabras[-1] if palabras else texto.strip()}
         if nombre == "leer_documento":
-            return {"nombre": "politica-vacaciones.md"}
+            # Antes devolvía un nombre de archivo fijo: cualquier consulta que
+            # cayera acá respondía con la política de vacaciones, y parecía
+            # acertar por casualidad. Ahora el documento lo resuelve el motor de
+            # recuperación, igual que lo haría el modelo real tras buscar.
+            documentos = motor().buscar_documentos(texto, k=1)
+            return {"nombre": documentos[0][0] if documentos else "no-encontrado.md"}
         return {}

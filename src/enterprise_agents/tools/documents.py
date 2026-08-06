@@ -72,13 +72,22 @@ HERRAMIENTAS_DOCUMENTOS = [
             "required": ["consulta"],
         },
         handler=buscar_documentos,
+        ejemplos=(
+            "¿qué dice la política de vacaciones?",
+            "¿cuál es el procedimiento de compras?",
+            "¿qué SLA tenemos comprometido?",
+            "¿cada cuánto se hacen los respaldos?",
+            "¿puedo trabajar desde casa?",
+            "¿qué dice el código de conducta?",
+            "normativa interna sobre viáticos",
+        ),
     ),
     ToolDef(
         name="leer_documento",
         description=(
-            "Devuelve el contenido completo de un documento del repositorio "
-            "interno. Llamala después de buscar_documentos, con el nombre exacto "
-            "del archivo (por ejemplo 'politica-vacaciones.md')."
+            "Devuelve el contenido íntegro de un documento del repositorio "
+            "interno. Llamala solo si los pasajes que devolvió buscar_documentos "
+            "no alcanzan, usando el nombre de archivo exacto que ella informó."
         ),
         input_schema={
             "type": "object",
@@ -91,5 +100,10 @@ HERRAMIENTAS_DOCUMENTOS = [
             "required": ["nombre"],
         },
         handler=leer_documento,
+        ejemplos=(
+            "mostrame el texto completo de ese archivo",
+            "abrí el documento entero",
+            "quiero leer el contenido íntegro del md",
+        ),
     ),
 ]

@@ -79,6 +79,11 @@ HERRAMIENTAS_FINANZAS = [
         ),
         input_schema={"type": "object", "properties": {}, "required": []},
         handler=estado_cobranzas,
+        ejemplos=(
+            "¿cómo está la cobranza?",
+            "¿cuánto tenemos por cobrar?",
+            "situación general de cuentas por cobrar",
+        ),
     ),
     ToolDef(
         name="facturas_vencidas",
@@ -89,6 +94,12 @@ HERRAMIENTAS_FINANZAS = [
         ),
         input_schema={"type": "object", "properties": {}, "required": []},
         handler=facturas_vencidas,
+        ejemplos=(
+            "¿qué facturas vencidas hay que reclamar?",
+            "¿qué facturas están impagas?",
+            "¿cuál es la factura más atrasada?",
+            "listado de morosos",
+        ),
     ),
     ToolDef(
         name="deuda_por_cliente",
@@ -108,5 +119,10 @@ HERRAMIENTAS_FINANZAS = [
             "required": [],
         },
         handler=deuda_por_cliente,
+        ejemplos=(
+            "¿cuánto nos debe cada cliente?",
+            "deuda acumulada por cliente",
+            "¿qué cliente nos adeuda más?",
+        ),
     ),
 ]

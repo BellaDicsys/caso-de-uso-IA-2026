@@ -37,7 +37,7 @@ class Agent:
     def run(self, task: str) -> str:
         """Ejecuta el bucle agéntico completo para una tarea y devuelve texto."""
         messages: list[dict[str, Any]] = [{"role": "user", "content": task}]
-        tools_api = [tool.to_api() for tool in self.tools.values()]
+        tools_api = [tool.to_esquema() for tool in self.tools.values()]
 
         for _ in range(self.max_iterations):
             reply = self.llm.complete(system=self.system_prompt, messages=messages, tools=tools_api)

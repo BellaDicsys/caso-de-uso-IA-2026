@@ -7,6 +7,11 @@ se revisa" porque comparten *qué*, *se* y *de*. Dos operaciones lo resuelven:
 1. **Vocabulario vacío** — se descartan artículos, preposiciones, pronombres,
    interrogativos y verbos auxiliares, que aparecen en todos los documentos y por
    lo tanto no discriminan ninguno.
+*Deber* quedó deliberadamente fuera del vocabulario vacío aunque parezca un
+auxiliar: en este dominio "¿cuánto nos **debe** ese cliente?" es contenido, no
+soporte. La ambigüedad la resuelve el contexto —qué otras palabras trae la
+consulta—, no descartar el término.
+
 2. **Reducción de la palabra a su raíz** — un recortador de sufijos conservador
    para el español, que hace que *vacaciones* y *vacación*, o *licencias* y
    *licencia*, sean el mismo término. Es deliberadamente tímido: prefiere no
@@ -168,8 +173,6 @@ VACIAS = frozenset(
         "hacer",
         "hace",
         "hacen",
-        "debe",
-        "deben",
         "puede",
         "pueden",
         "tener",

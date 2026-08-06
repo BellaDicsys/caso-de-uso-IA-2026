@@ -65,6 +65,12 @@ HERRAMIENTAS_ANALITICA = [
         ),
         input_schema={"type": "object", "properties": {}, "required": []},
         handler=resumen_ventas,
+        ejemplos=(
+            "¿cuánto facturamos este año?",
+            "¿quiénes son nuestros principales clientes?",
+            "¿cómo vienen los ingresos por mes?",
+            "ranking de clientes por volumen de ventas",
+        ),
     ),
     ToolDef(
         name="avance_proyectos",
@@ -75,5 +81,11 @@ HERRAMIENTAS_ANALITICA = [
         ),
         input_schema={"type": "object", "properties": {}, "required": []},
         handler=avance_proyectos,
+        ejemplos=(
+            "¿qué proyectos están en riesgo?",
+            "¿cómo viene el consumo de horas?",
+            "estado de avance de los proyectos",
+            "¿algún proyecto se pasó del presupuesto?",
+        ),
     ),
 ]

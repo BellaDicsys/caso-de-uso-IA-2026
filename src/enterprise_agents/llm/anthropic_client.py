@@ -20,6 +20,18 @@ from enterprise_agents.llm.base import LLMReply
 DEFAULT_MAX_TOKENS = 4096
 
 
+_CAMPOS_DE_API = ("name", "description", "input_schema")
+
+
+def _solo_campos_de_api(tool: dict[str, Any]) -> dict[str, Any]:
+    """Descarta los campos que agrega `ToolDef.to_esquema()` para el ruteo local.
+
+    La Messages API rechaza propiedades que no conoce, y `ejemplos` es una de
+    ellas: existe para el cliente simulado, no para el modelo.
+    """
+    return {k: v for k, v in tool.items() if k in _CAMPOS_DE_API}
+
+
 class AnthropicLLMClient:
     """Implementación de `LLMClient` sobre el SDK oficial de Anthropic."""
 
@@ -49,7 +61,7 @@ class AnthropicLLMClient:
                 }
             ],
             messages=messages,
-            tools=tools or anthropic.NOT_GIVEN,
+            tools=[_solo_campos_de_api(t) for t in tools] or anthropic.NOT_GIVEN,
         )
 
         if response.stop_reason == "refusal":

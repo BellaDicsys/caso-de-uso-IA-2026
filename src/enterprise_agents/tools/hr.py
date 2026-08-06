@@ -61,6 +61,12 @@ HERRAMIENTAS_PERSONAL = [
             "required": ["habilidad"],
         },
         handler=buscar_por_habilidad,
+        ejemplos=(
+            "¿quién sabe Python?",
+            "perfiles con experiencia en SQL",
+            "¿tenemos gente que maneje Power BI?",
+            "buscar personas con una habilidad técnica",
+        ),
     ),
     ToolDef(
         name="disponibilidad_equipo",
@@ -80,5 +86,11 @@ HERRAMIENTAS_PERSONAL = [
             "required": [],
         },
         handler=disponibilidad_equipo,
+        ejemplos=(
+            "¿quién está libre para un proyecto nuevo?",
+            "¿cómo está la disponibilidad del equipo?",
+            "¿hay personas sin asignar?",
+            "capacidad ociosa del equipo",
+        ),
     ),
 ]

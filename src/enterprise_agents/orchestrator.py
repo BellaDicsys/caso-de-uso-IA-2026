@@ -40,10 +40,13 @@ tenés herramienta de delegación disponible— decilo y sugerí a quién contac
 """
 
 
-def _agente_como_herramienta(nombre: str, descripcion: str, agente: Agent) -> ToolDef:
+def _agente_como_herramienta(
+    nombre: str, descripcion: str, agente: Agent, ejemplos: tuple[str, ...] = ()
+) -> ToolDef:
     return ToolDef(
         name=nombre,
         description=descripcion,
+        ejemplos=ejemplos,
         input_schema={
             "type": "object",
             "properties": {
@@ -80,12 +83,26 @@ def crear_orquestador(llm: LLMClient, settings: Settings, rol: str | None = None
             "Delegá en el analista de datos consultas sobre ventas, facturación, "
             "ingresos por cliente o servicio, y estado/avance de proyectos.",
             analista,
+            (
+                '"¿cuánto facturamos este año?"',
+                '"¿quiénes son nuestros principales clientes?"',
+                '"¿qué proyectos están en riesgo por consumo de horas?"',
+                '"¿cómo viene el avance de los proyectos?"',
+            ),
         ),
         _agente_como_herramienta(
             "delegar_gestor_documental",
             "Delegá en el gestor documental consultas sobre políticas internas, "
             "manuales, contratos, SLA y procesos documentados.",
             documental,
+            (
+                '"¿qué dice la política de vacaciones?"',
+                '"¿cuál es el procedimiento de compras?"',
+                '"¿qué SLA tenemos comprometido con los clientes?"',
+                '"¿puedo trabajar desde casa?"',
+                '"¿cada cuánto se hacen los respaldos?"',
+                '"¿qué dice el código de conducta sobre regalos?"',
+            ),
         ),
     ]
 
@@ -97,12 +114,25 @@ def crear_orquestador(llm: LLMClient, settings: Settings, rol: str | None = None
                     "Delegá en el analista financiero consultas sobre cobranzas, "
                     "cuentas por cobrar, facturas vencidas, mora y deuda de clientes.",
                     finanzas,
+                    (
+                        '"¿qué facturas vencidas hay que reclamar?"',
+                        '"¿cuánto nos debe cada cliente?"',
+                        '"¿cómo está la cobranza este mes?"',
+                        '"¿cuál es el monto de la deuda impaga?"',
+                        '"¿cuánto nos debe ese cliente?"',
+                    ),
                 ),
                 _agente_como_herramienta(
                     "delegar_gestor_personal",
                     "Delegá en el gestor de personal consultas sobre perfiles, "
                     "habilidades, disponibilidad y asignación de equipos.",
                     personal,
+                    (
+                        '"¿quién sabe Python y está disponible?"',
+                        '"¿qué perfiles tenemos para armar un equipo?"',
+                        '"¿hay personas sin asignar?"',
+                        '"buscar gente con experiencia en SQL"',
+                    ),
                 ),
             ]
         )

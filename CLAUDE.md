@@ -30,6 +30,8 @@ python -m enterprise_agents version --proximo   # versión que se publicaría co
 - **Código compartido**: normalización de texto en `text.py` (`normalizar`,
   `coincide_palabra`, `coincide_prefijo`) y lectura de CSV en `datos.leer_csv()`.
   No reimplementar ninguno de los dos en un módulo nuevo.
+- **Recuperación**: toda búsqueda por relevancia —documentos o herramientas— pasa
+  por `recuperacion/`. No agregar un segundo mecanismo de ranking.
 - **Frontend**: los estilos y utilidades comunes viven en `static/ds.css` y
   `static/ds.js` (incluido `esc()` para escapar antes de cualquier `innerHTML`).
 - **Commits**: obligatorio [Conventional Commits](https://www.conventionalcommits.org/es/)
@@ -47,7 +49,8 @@ python -m enterprise_agents version --proximo   # versión que se publicaría co
    `ToolDef` con descripciones que digan *cuándo* usarlas).
 2. Crear el especialista en `agents/specialists.py` con su system prompt.
 3. Sumarlo al orquestador en `orchestrator.py` como herramienta `delegar_*`.
-4. Agregar keywords del dominio en `llm/mock_client.py` para que la demo offline
-   lo cubra, y tests en `tests/`.
+4. Escribir los `ejemplos` de cada `ToolDef` (enunciados típicos en lenguaje
+   natural): de ahí sale el ruteo del cliente simulado, que es semántico y no por
+   palabras clave. Sumar un test de ruteo en `tests/test_router.py`.
 5. Sumar un escenario del dominio en `evals.py` (el test `test_evals` exige que
    todos los escenarios pasen en mock).
