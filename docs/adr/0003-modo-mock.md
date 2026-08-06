@@ -1,6 +1,9 @@
 # ADR-0003 — Modo demo offline (mock) como ciudadano de primera clase
 
 **Estado:** Aceptada — agosto 2026
+**Enmendada por:** [ADR-0008](0008-ruteo-semantico-en-el-cliente-mock.md) — la decisión
+de tener un mock sigue vigente; el mecanismo de selección por palabras clave que se
+describe abajo fue reemplazado por ruteo semántico.
 
 ## Contexto
 

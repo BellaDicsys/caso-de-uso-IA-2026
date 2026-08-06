@@ -27,15 +27,19 @@ ejecutan flujos completos** — exactamente el patrón que esta suite demuestra.
 | Dominio Dicsys | Patrón de innovación observado en el mercado | Cómo lo demuestra esta suite |
 |---|---|---|
 | Analítica de datos | Agentes que consultan datos operativos y detectan riesgos (FP&A, forecasting, tableros conversacionales) | Analista de datos con `resumen_ventas` y `avance_proyectos`, incluyendo alertas de consumo de horas |
-| Gestión documental | Knowledge management agéntico: búsqueda + lectura + cita de fuentes sobre políticas y contratos | Gestor documental con flujo buscar → leer → citar documento fuente |
+| Finanzas | Agentes de cobranzas y cuentas por cobrar: priorización de reclamos por antigüedad y exposición por cliente | Analista financiero con `estado_cobranzas`, `facturas_vencidas` y `deuda_por_cliente` |
+| Gestión documental | Knowledge management agéntico: búsqueda + lectura + cita de fuentes sobre políticas y contratos | Gestor documental con recuperación híbrida sobre 30 documentos y flujo buscar → leer → citar fuente |
 | Personal / RRHH | Agentes de staffing y recruiting: matching de habilidades y capacidad disponible | Gestor de personal con `buscar_por_habilidad` y `disponibilidad_equipo` |
 | Coordinación | Sistemas multi-agente donde un orquestador delega en especialistas y sintetiza (el patrón dominante en despliegues 2025–2026) | Orquestador con delegación multi-dominio en una misma consulta |
+| Confiabilidad | La discusión de 2026 se corrió de "¿puede hacerlo?" a "¿cómo sé que lo hizo bien?": evaluación, fundamentación y observabilidad como requisito de compra | Conjunto etiquetado con umbrales en CI, verificación de fundamentación de cada cifra y árbol de trazas por consulta |
+| Seguridad de agentes | La inyección de prompt indirecta —vía documentos que el agente lee— es el vector nuevo de esta generación de sistemas | Saneamiento de todo contenido recuperado y suite de ataques ejecutable sin modelo |
 
 ## Lecciones de los despliegues reales incorporadas al diseño
 
 1. **Empezar por flujos acotados y medibles** — los casos exitosos automatizan
    dominios concretos con datos accesibles, no "toda la empresa". La suite define
-   tres dominios cerrados con herramientas explícitas.
+   cuatro dominios cerrados con herramientas explícitas, y **medibles** en el sentido
+   literal: la calidad de la recuperación tiene umbrales que rompen el build.
 2. **El agente decide, el sistema ejecuta** — los despliegues confiables separan el
    razonamiento del modelo de la ejecución determinística (validada y auditable).
    Es el principio rector de `tools/` (ver arquitectura).
