@@ -8,6 +8,12 @@ automáticamente desde los *Conventional Commits* (ver
 Las versiones anteriores a la puesta en marcha del versionado automático se
 reconstruyeron a partir del historial.
 
+## 0.8.0 — 2026-08-06
+
+### Nuevas funcionalidades
+
+- **evaluacion**: arnés de métricas de recuperación y verificador de fundamentación
+
 ## 0.7.0 — 2026-08-06
 
 ### Nuevas funcionalidades
