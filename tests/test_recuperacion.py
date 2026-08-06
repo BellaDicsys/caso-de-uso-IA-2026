@@ -312,3 +312,22 @@ def test_acepta_consultas_del_dominio(motor_corpus, consulta):
 
 def test_cobertura_de_consulta_vacia_es_cero(motor_corpus):
     assert motor_corpus.cobertura("de la que se") == 0.0
+
+
+def test_el_indice_se_reconstruye_si_cambia_el_corpus(tmp_path, monkeypatch):
+    """Hallazgo: era un lru_cache perpetuo mientras los CSV sí se invalidaban."""
+    from enterprise_agents.recuperacion import motor as mod
+
+    corpus = tmp_path / "docs"
+    corpus.mkdir()
+    (corpus / "uno.md").write_text(
+        "# Uno\n\n## Tema\n\nContenido sobre viáticos.", encoding="utf-8"
+    )
+    monkeypatch.setattr(mod, "DOCS_DIR", corpus)
+    monkeypatch.setattr(mod, "_cache", None)
+
+    assert len(mod.motor_por_defecto().fragmentos) == 1
+    (corpus / "dos.md").write_text(
+        "# Dos\n\n## Tema\n\nContenido sobre respaldos.", encoding="utf-8"
+    )
+    assert len(mod.motor_por_defecto().fragmentos) == 2

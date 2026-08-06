@@ -184,3 +184,58 @@ def test_salir_descarta_la_memoria(cliente):
     entrar(cliente, "gestion")
     datos = cliente.post("/consultar", json={"pregunta": "¿Cuánto facturamos?"}).json()
     assert datos["turnos"] == 2
+
+
+# --- Regresiones de la segunda ronda de auditoría ---------------------------
+
+
+def test_un_gestor_no_ve_las_consultas_de_otro_usuario(cliente):
+    """Hallazgo: el registro de trazas era global y filtraba conversaciones ajenas."""
+    from fastapi.testclient import TestClient
+
+    entrar(cliente, "consulta")
+    cliente.post("/consultar", json={"pregunta": "¿cuántos días de vacaciones me corresponden?"})
+
+    gestor = TestClient(cliente.app, base_url="https://testserver")
+    entrar(gestor, "gestion")
+    datos = gestor.get("/trazas/api").json()
+    assert datos["alcance"] == "propias"
+    assert all("vacaciones me corresponden" not in t["consulta"] for t in datos["trazas"])
+
+
+def test_cada_uno_ve_sus_propias_trazas(cliente):
+    entrar(cliente, "gestion")
+    cliente.post("/consultar", json={"pregunta": "¿Qué facturas vencidas hay?"})
+    datos = cliente.get("/trazas/api").json()
+    assert [t["consulta"] for t in datos["trazas"]] == ["¿Qué facturas vencidas hay?"]
+    assert all(t["usuario"] == "gestion" for t in datos["trazas"])
+
+
+def test_el_admin_ve_todas_las_trazas_y_el_visor_lo_declara(cliente):
+    """Ver todo es una capacidad de administración, pero tiene que ser explícita."""
+    from fastapi.testclient import TestClient
+
+    entrar(cliente, "consulta")
+    cliente.post("/consultar", json={"pregunta": "¿Cuánto facturamos este año?"})
+
+    admin = TestClient(cliente.app, base_url="https://testserver")
+    entrar(admin, "admin")
+    datos = admin.get("/trazas/api").json()
+    assert datos["alcance"] == "todas"
+    assert any(t["usuario"] == "consulta" for t in datos["trazas"])
+
+
+def test_las_conversaciones_de_sesiones_muertas_se_purgan(cliente):
+    """Hallazgo: solo se borraban al salir; una sesión expirada dejaba la suya."""
+    from fastapi.testclient import TestClient
+
+    entrar(cliente, "gestion")
+    cliente.post("/consultar", json={"pregunta": "¿Qué facturas vencidas hay?"})
+    # Se revoca la sesión por detrás, como haría una expiración.
+    cliente.app.state.sesiones.cerrar_de_usuario("gestion")
+
+    otro = TestClient(cliente.app, base_url="https://testserver")
+    entrar(otro, "admin")
+    otro.post("/consultar", json={"pregunta": "¿Cuánto facturamos?"})
+    # La entrada huérfana no sobrevive a la siguiente conversación.
+    assert len(cliente.app.state.conversaciones) == 1

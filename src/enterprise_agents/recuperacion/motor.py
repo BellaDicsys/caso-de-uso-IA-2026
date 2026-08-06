@@ -23,7 +23,6 @@ consenso.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from functools import lru_cache
 from pathlib import Path
 
 from enterprise_agents.config import DOCS_DIR
@@ -166,7 +165,25 @@ class MotorRecuperacion:
         return ordenado[:k]
 
 
-@lru_cache(maxsize=1)
-def motor() -> MotorRecuperacion:
-    """Motor del corpus por defecto, construido una sola vez por proceso."""
-    return MotorRecuperacion.desde_directorio()
+_cache: tuple[float, MotorRecuperacion] | None = None
+
+
+def _firma(directorio: Path) -> float:
+    """Marca temporal del corpus: cambia si se agrega, borra o edita un documento."""
+    archivos = sorted(directorio.glob("*.md"))
+    return sum(p.stat().st_mtime for p in archivos) + len(archivos)
+
+
+def motor_por_defecto() -> MotorRecuperacion:
+    """Motor del corpus por defecto, reconstruido solo si el corpus cambió.
+
+    Antes era un `lru_cache` perpetuo. El resto del proyecto invalida por fecha
+    de modificación (`datos.leer_csv`), así que editar un CSV se reflejaba en
+    caliente y editar un documento no: dos comportamientos distintos dentro de la
+    misma aplicación, que es peor que cualquiera de los dos por separado.
+    """
+    global _cache
+    firma = _firma(DOCS_DIR)
+    if _cache is None or _cache[0] != firma:
+        _cache = (firma, MotorRecuperacion.desde_directorio())
+    return _cache[1]

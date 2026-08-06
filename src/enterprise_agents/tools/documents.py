@@ -14,7 +14,7 @@ aparece en casi todos los títulos— y ese fue el motivo del cambio.
 from __future__ import annotations
 
 from enterprise_agents.config import DOCS_DIR
-from enterprise_agents.recuperacion.motor import motor
+from enterprise_agents.recuperacion.motor import motor_por_defecto
 from enterprise_agents.seguridad.saneamiento import sanear
 from enterprise_agents.tools.base import ToolDef
 
@@ -24,7 +24,7 @@ PASAJES = 4
 
 
 def buscar_documentos(consulta: str) -> str:
-    resultados = motor().buscar(consulta, k=PASAJES)
+    resultados = motor_por_defecto().buscar(consulta, k=PASAJES)
     if not resultados:
         disponibles = ", ".join(p.name for p in sorted(DOCS_DIR.glob("*.md")))
         return f"Sin coincidencias para '{consulta}'. Documentos disponibles: {disponibles}."

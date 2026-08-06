@@ -17,7 +17,7 @@ from enterprise_agents.evaluacion.metricas import (
     rango_reciproco,
     recall_en_k,
 )
-from enterprise_agents.recuperacion.motor import MotorRecuperacion, motor
+from enterprise_agents.recuperacion.motor import MotorRecuperacion, motor_por_defecto
 
 # Profundidad de corte. 5 es lo que la herramienta documental le pasa al modelo,
 # así que es la medida que importa: si el documento correcto no está entre los 5,
@@ -89,7 +89,7 @@ def evaluar_recuperacion(
     indice: MotorRecuperacion | None = None,
 ) -> Reporte:
     """Corre el conjunto etiquetado y devuelve las métricas agregadas."""
-    indice = indice or motor()
+    indice = indice or motor_por_defecto()
     resultados = [
         ResultadoConsulta(
             consulta=consulta,

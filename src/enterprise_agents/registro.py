@@ -38,15 +38,25 @@ class RegistroTrazas:
         with self._lock:
             self._trazas.append(traza)
 
-    def recientes(self, limite: int = 20) -> list[Traza]:
-        """Las últimas trazas, de la más reciente a la más antigua."""
-        with self._lock:
-            return list(reversed(self._trazas))[:limite]
+    def recientes(self, limite: int = 20, usuario: str | None = None) -> list[Traza]:
+        """Las últimas trazas, de la más reciente a la más antigua.
 
-    def resumen(self) -> dict[str, float | int]:
+        Con `usuario`, solo las de esa persona. El visor lo usa siempre salvo
+        para el rol admin: una consulta es contenido del usuario que la hizo, y
+        un gestor no tiene por qué leer lo que preguntó otro empleado.
+        """
+        with self._lock:
+            trazas = list(reversed(self._trazas))
+        if usuario is not None:
+            trazas = [t for t in trazas if t.usuario == usuario]
+        return trazas[:limite]
+
+    def resumen(self, usuario: str | None = None) -> dict[str, float | int]:
         """Agregados sobre lo registrado, para el encabezado del visor."""
         with self._lock:
             trazas = list(self._trazas)
+        if usuario is not None:
+            trazas = [t for t in trazas if t.usuario == usuario]
         if not trazas:
             return {"consultas": 0, "ms_promedio": 0.0, "tokens_promedio": 0, "con_error": 0}
         return {

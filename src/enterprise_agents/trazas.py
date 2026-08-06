@@ -84,6 +84,9 @@ class Traza:
     respuesta: str = ""
     milisegundos_total: float = 0.0
     modo: str = ""
+    # Quién hizo la consulta. Sin esto el registro es global y cualquiera con
+    # rol de gestión lee lo que preguntaron los demás (ver auditoría, ronda 2).
+    usuario: str = ""
 
     # --- Vistas -------------------------------------------------------------
 
@@ -169,6 +172,7 @@ class Traza:
             "consulta": self.consulta,
             "respuesta": self.respuesta,
             "modo": self.modo,
+            "usuario": self.usuario,
             "milisegundos": round(self.milisegundos_total or self.milisegundos, 1),
             "tokens_contexto": self.tokens_contexto,
             "tokens_por_agente": self.tokens_por_agente,
@@ -208,9 +212,9 @@ class Traza:
 
 
 @contextmanager
-def capturar(consulta: str = "", modo: str = "") -> Iterator[Traza]:
+def capturar(consulta: str = "", modo: str = "", usuario: str = "") -> Iterator[Traza]:
     """Captura en una `Traza` todo lo que ocurra dentro del bloque."""
-    traza = Traza(consulta=consulta, modo=modo)
+    traza = Traza(consulta=consulta, modo=modo, usuario=usuario)
     testigo_traza = _actual.set(traza)
     testigo_padre = _padre.set(None)
     inicio = time.perf_counter()

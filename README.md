@@ -34,7 +34,7 @@ flowchart TD
 | Design system | propio (`ds.css` + `ds.js`) | tokens estilo Material 3, tema claro/oscuro, microinteracciones |
 | Tablero | SVG propio | KPIs + alertas tempranas + 3 gráficos, paleta validada para daltonismo |
 | Móvil | Web Speech API | chat de voz: dictado (SpeechRecognition) + respuesta hablada (speechSynthesis) |
-| Calidad | pytest + pytest-cov + ruff | 300 tests, cobertura 95% (umbral 85% en CI), lint y formato |
+| Calidad | pytest + pytest-cov + ruff | 305 tests, cobertura 95% (umbral 85% en CI), lint y formato |
 | Recuperación | propia (`recuperacion/`) | híbrida BM25 + espacio latente (SVD del corpus), fusión RRF; sin pesos preentrenados |
 | Evaluación | propia (`evaluacion/`) | 55 consultas etiquetadas, recall/MRR/nDCG con umbrales en CI y verificador de fundamentación |
 | Seguridad de agentes | propia (`seguridad/`) | saneamiento del contenido recuperado + suite de 7 ataques por inyección de prompt |
@@ -102,7 +102,7 @@ enterprise-agents ask --live "¿Cuánto facturamos a Banco Andino y quién puede
 ## Verificación
 
 ```bash
-python -m pytest --cov   # 300 tests + cobertura (95 %)
+python -m pytest --cov   # 305 tests + cobertura (95 %)
 ruff check .             # lint
 ruff format --check .    # formato
 ```
@@ -177,7 +177,7 @@ GitHub con las notas generadas. Fundamento en
 │   ├── versionado.py          # Versionado automático (Conventional Commits → semver)
 │   ├── cli.py                 # CLI: demo / ask / eval / serve / version
 │   └── static/                # DS propio (ds.css/ds.js) + páginas (chat, tablero, usuarios, móvil, ayuda, login)
-└── tests/                     # Suite de tests (300, sin llamadas externas)
+└── tests/                     # Suite de tests (305, sin llamadas externas)
 ```
 
 ## Documentación
@@ -189,7 +189,7 @@ GitHub con las notas generadas. Fundamento en
 | [docs/documento-funcional.md](docs/documento-funcional.md) | Documento funcional: requerimientos, casos de uso y **guía de prueba paso a paso** |
 | [docs/especificaciones-tecnicas.md](docs/especificaciones-tecnicas.md) | Especificaciones técnicas: stack, módulos, contratos, seguridad, testing |
 | [docs/arquitectura.md](docs/arquitectura.md) | Arquitectura multi-agente, flujo de una consulta, decisiones técnicas y evolución a producción |
-| [docs/auditoria-adversarial.md](docs/auditoria-adversarial.md) | **Auditoría adversarial**: hallazgos de seguridad, correctitud, calidad y rendimiento, con lo corregido y los riesgos aceptados |
+| [docs/auditoria-adversarial.md](docs/auditoria-adversarial.md) | **Auditoría adversarial en dos rondas**: hallazgos de seguridad, correctitud, calidad y rendimiento, con lo corregido, los límites declarados y lo que queda sin verificar |
 | [docs/casos-innovacion.md](docs/casos-innovacion.md) | Casos de innovación en gestión empresarial con IA agéntica que sirvieron de puntapié inicial |
 | [docs/guia-vibecoding.md](docs/guia-vibecoding.md) | Mejores prácticas de *vibecoding* / desarrollo asistido por IA aplicadas en este repositorio |
 | [CHANGELOG.md](CHANGELOG.md) | Historial de versiones, generado automáticamente desde los commits |

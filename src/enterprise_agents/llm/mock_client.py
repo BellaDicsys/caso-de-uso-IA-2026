@@ -23,7 +23,7 @@ from typing import Any
 
 from enterprise_agents.llm.base import LLMReply
 from enterprise_agents.llm.router import RouterSemantico
-from enterprise_agents.recuperacion.motor import motor
+from enterprise_agents.recuperacion.motor import motor_por_defecto
 from enterprise_agents.text import coincide_palabra, normalizar
 
 # Habilidades reconocidas en los datos de ejemplo, para inferir argumentos.
@@ -203,6 +203,6 @@ class MockLLMClient:
             # cayera acá respondía con la política de vacaciones, y parecía
             # acertar por casualidad. Ahora el documento lo resuelve el motor de
             # recuperación, igual que lo haría el modelo real tras buscar.
-            documentos = motor().buscar_documentos(texto, k=1)
+            documentos = motor_por_defecto().buscar_documentos(texto, k=1)
             return {"nombre": documentos[0][0] if documentos else "no-encontrado.md"}
         return {}

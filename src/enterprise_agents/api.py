@@ -223,6 +223,12 @@ def crear_app(settings: Settings | None = None) -> FastAPI:
 
     def _conversacion(token: str) -> Conversacion:
         with lock_conversaciones:
+            # Purga de conversaciones huérfanas: una sesión que expira o un
+            # navegador que se cierra sin pasar por /salir dejaba su entrada para
+            # siempre. Es la misma fuga que la auditoría anterior encontró en el
+            # almacén de sesiones, repetida acá.
+            for huerfano in [t for t in conversaciones if sesiones.obtener(t) is None]:
+                del conversaciones[huerfano]
             return conversaciones.setdefault(token, Conversacion())
 
     @app.post("/consultar", response_model=Respuesta)
@@ -235,7 +241,7 @@ def crear_app(settings: Settings | None = None) -> FastAPI:
 
         # Toda consulta queda trazada: sin esto no hay forma de auditar por qué
         # el asistente respondió lo que respondió (ver ADR-0011).
-        with trazas.capturar(consulta.pregunta, modo=modo) as traza:
+        with trazas.capturar(consulta.pregunta, modo=modo, usuario=sesion["usuario"]) as traza:
             traza.respuesta = orquestador.run(consulta.pregunta, historial=historial)
         registro.agregar(traza)
 
@@ -264,10 +270,17 @@ def crear_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/trazas/api")
     def trazas_datos(request: Request, limite: int = 20) -> dict:
-        _requerir(request, ROLES_TABLERO)
+        sesion = _requerir(request, ROLES_TABLERO)
+        # Cada quien ve sus propias trazas. El admin ve todas, y el visor lo
+        # dice: una consulta es contenido de quien la hizo, y un gestor no tiene
+        # por qué leer lo que preguntó otro empleado sobre sus vacaciones.
+        propietario = None if sesion["rol"] == "admin" else sesion["usuario"]
         return {
-            "resumen": registro.resumen(),
-            "trazas": [t.a_dict() for t in registro.recientes(max(1, min(limite, 50)))],
+            "resumen": registro.resumen(propietario),
+            "alcance": "todas" if propietario is None else "propias",
+            "trazas": [
+                t.a_dict() for t in registro.recientes(max(1, min(limite, 50)), propietario)
+            ],
         }
 
     # --- Tablero ------------------------------------------------------------
@@ -323,6 +336,7 @@ def crear_app(settings: Settings | None = None) -> FastAPI:
     # Referencias internas para tests (evita repetir el login en cada uno).
     app.state.sesiones = sesiones
     app.state.registro = registro
+    app.state.conversaciones = conversaciones
     return app
 
 

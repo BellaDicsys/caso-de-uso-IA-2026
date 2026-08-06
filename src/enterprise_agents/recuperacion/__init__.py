@@ -6,6 +6,16 @@ Sin dependencias externas ni pesos preentrenados: determinístico y testeable.
 """
 
 from enterprise_agents.recuperacion.fragmentos import Fragmento, fragmentar_corpus
-from enterprise_agents.recuperacion.motor import MotorRecuperacion, Resultado, motor
+from enterprise_agents.recuperacion.motor import (
+    MotorRecuperacion,
+    Resultado,
+    motor_por_defecto,
+)
 
-__all__ = ["Fragmento", "MotorRecuperacion", "Resultado", "fragmentar_corpus", "motor"]
+__all__ = [
+    "Fragmento",
+    "MotorRecuperacion",
+    "Resultado",
+    "fragmentar_corpus",
+    "motor_por_defecto",
+]
