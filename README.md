@@ -34,8 +34,9 @@ flowchart TD
 | Design system | propio (`ds.css` + `ds.js`) | tokens estilo Material 3, tema claro/oscuro, microinteracciones |
 | Tablero | SVG propio | KPIs + alertas tempranas + 3 gráficos, paleta validada para daltonismo |
 | Móvil | Web Speech API | chat de voz: dictado (SpeechRecognition) + respuesta hablada (speechSynthesis) |
-| Calidad | pytest + pytest-cov + ruff | 169 tests, cobertura 94% (umbral 85% en CI), lint y formato |
+| Calidad | pytest + pytest-cov + ruff | 209 tests, cobertura 94% (umbral 85% en CI), lint y formato |
 | Recuperación | propia (`recuperacion/`) | híbrida BM25 + espacio latente (SVD del corpus), fusión RRF; sin pesos preentrenados |
+| Evaluación | propia (`evaluacion/`) | 55 consultas etiquetadas, recall/MRR/nDCG con umbrales en CI y verificador de fundamentación |
 | Versionado | propio (`versionado.py`) | semver automático desde Conventional Commits: changelog, tag y release en CI |
 
 ## Superficies de uso
@@ -65,8 +66,9 @@ enterprise-agents demo
 # CLI: consulta libre (con -v se ven las delegaciones y herramientas)
 enterprise-agents -v ask "¿Qué facturas vencidas hay que reclamar?"
 
-# CLI: set de evaluación (6 escenarios con criterios verificables)
+# CLI: evaluación (escenarios + fundamentación + métricas de recuperación)
 enterprise-agents eval
+enterprise-agents eval --recuperacion   # solo el motor, no necesita modelo
 
 # Web: chat + tablero + API en http://localhost:8000
 enterprise-agents serve
@@ -91,13 +93,23 @@ enterprise-agents ask --live "¿Cuánto facturamos a Banco Andino y quién puede
 ## Verificación
 
 ```bash
-python -m pytest --cov   # 169 tests + cobertura (94 %)
+python -m pytest --cov   # 209 tests + cobertura (94 %)
 ruff check .             # lint
 ruff format --check .    # formato
 ```
 
 El pipeline de CI (`.github/workflows/ci.yml`) ejecuta lint, tests con umbral de
-cobertura del 85 % y la demo offline como smoke test en cada push.
+cobertura del 85 %, la demo offline como smoke test y la **evaluación completa**
+en cada push.
+
+### Qué se evalúa
+
+| Instrumento | Mide | Falla si |
+|---|---|---|
+| Escenarios de negocio | que la respuesta contenga los datos esperados | falta un criterio |
+| **Fundamentación** | que toda cifra de la respuesta la haya informado una herramienta | aparece un número que ninguna herramienta produjo |
+| Recuperación | recall@5, MRR, nDCG@5 sobre 51 consultas etiquetadas | cae por debajo del umbral |
+| Abstención | que las 4 consultas ajenas al dominio no devuelvan nada | el motor responde algo igual |
 
 ## Versionado automático
 
@@ -139,11 +151,13 @@ GitHub con las notas generadas. Fundamento en
 │   ├── metrics.py             # KPIs y alertas tempranas del tablero
 │   ├── auth.py                # Autenticación, usuarios y roles (RBAC)
 │   ├── api.py                 # API HTTP (FastAPI): chat, tablero, usuarios, móvil
-│   ├── evals.py               # Set de evaluación de escenarios
+│   ├── evals.py               # Set de evaluación de escenarios de negocio
+│   ├── evaluacion/            # Métricas de recuperación + verificador de fundamentación
+│   ├── trazas.py              # Registro de herramientas ejecutadas por consulta
 │   ├── versionado.py          # Versionado automático (Conventional Commits → semver)
 │   ├── cli.py                 # CLI: demo / ask / eval / serve / version
 │   └── static/                # DS propio (ds.css/ds.js) + páginas (chat, tablero, usuarios, móvil, ayuda, login)
-└── tests/                     # Suite de tests (169, sin llamadas externas)
+└── tests/                     # Suite de tests (209, sin llamadas externas)
 ```
 
 ## Documentación

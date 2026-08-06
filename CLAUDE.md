@@ -12,7 +12,8 @@ pip install -e ".[dev]"   # instalación
 python -m pytest          # tests (deben pasar siempre; no requieren red ni API key)
 ruff check . && ruff format --check .   # lint y formato (CI los exige)
 python -m enterprise_agents demo            # smoke test offline
-python -m enterprise_agents eval            # set de evaluación (6 escenarios, mock)
+python -m enterprise_agents eval            # escenarios + fundamentación + recuperación
+python -m enterprise_agents eval --recuperacion  # solo métricas del motor (sin modelo)
 python -m enterprise_agents version --proximo   # versión que se publicaría con los commits actuales
 ```
 

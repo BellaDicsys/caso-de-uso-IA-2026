@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from enterprise_agents import trazas
 from enterprise_agents.llm.base import LLMClient
 from enterprise_agents.tools.base import ToolDef
 
@@ -69,8 +70,13 @@ class Agent:
         tool = self.tools.get(nombre)
         if tool is None:
             return {"content": f"Herramienta desconocida: {nombre}", "is_error": True}
-        try:
-            return {"content": tool.run(argumentos)}
-        except Exception as exc:  # noqa: BLE001 - el error vuelve al modelo
-            logger.exception("[%s] error ejecutando %s", self.name, nombre)
-            return {"content": f"Error al ejecutar {nombre}: {exc}", "is_error": True}
+        # La traza registra qué devolvió cada herramienta; si nadie está
+        # capturando, `registrar` no hace nada y no cuesta nada.
+        with trazas.registrar(self.name, nombre, argumentos) as caja:
+            try:
+                caja[0] = tool.run(argumentos)
+                return {"content": caja[0]}
+            except Exception as exc:  # noqa: BLE001 - el error vuelve al modelo
+                logger.exception("[%s] error ejecutando %s", self.name, nombre)
+                caja[0] = f"Error al ejecutar {nombre}: {exc}"
+                return {"content": caja[0], "is_error": True}

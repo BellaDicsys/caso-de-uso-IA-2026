@@ -4,7 +4,8 @@ Uso:
     enterprise-agents demo                # corre los escenarios de demostración
     enterprise-agents ask "pregunta"      # consulta libre al orquestador
     enterprise-agents ask --live "..."    # fuerza el uso de la API real
-    enterprise-agents eval [--live]       # set de evaluación (mock o modelo real)
+    enterprise-agents eval [--live]       # escenarios + fundamentación + recuperación
+    enterprise-agents eval --recuperacion # solo métricas de recuperación (sin modelo)
     enterprise-agents serve [--port N]    # API HTTP + chat web
     enterprise-agents version [--proximo] # versión actual / próxima según los commits
 
@@ -80,8 +81,14 @@ def main(argv: list[str] | None = None) -> int:
     ask.add_argument("pregunta", help="la consulta en lenguaje natural")
     ask.add_argument("--live", action="store_true", help="fuerza el uso de la API de Claude")
 
-    ev = sub.add_parser("eval", help="corre el set de evaluación de escenarios")
+    ev = sub.add_parser("eval", help="corre el set de evaluación")
     ev.add_argument("--live", action="store_true", help="evalúa contra la API de Claude")
+    ev.add_argument(
+        "--recuperacion",
+        action="store_true",
+        help="solo las métricas de recuperación (no requiere modelo)",
+    )
+    ev.add_argument("--detallado", action="store_true", help="detalle consulta por consulta")
 
     serve = sub.add_parser("serve", help="levanta la API HTTP y el chat web")
     serve.add_argument("--host", default="127.0.0.1")
@@ -103,6 +110,13 @@ def main(argv: list[str] | None = None) -> int:
     if args.comando == "version":
         return _comando_version(args)
 
+    if args.comando == "eval" and args.recuperacion:
+        # No necesita modelo: mide el motor de recuperación contra el conjunto
+        # etiquetado, así que se resuelve antes de construir el cliente LLM.
+        from enterprise_agents.evaluacion.arnes import evaluar_recuperacion, imprimir_reporte
+
+        return 0 if imprimir_reporte(evaluar_recuperacion(), args.detallado) else 1
+
     if args.comando == "serve":
         # Import diferido: FastAPI/uvicorn solo se necesitan para la API.
         from enterprise_agents.api import servir
@@ -117,8 +131,13 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.comando == "eval":
         from enterprise_agents.evals import correr_evaluacion, imprimir_reporte
+        from enterprise_agents.evaluacion.arnes import evaluar_recuperacion
+        from enterprise_agents.evaluacion.arnes import imprimir_reporte as imprimir_recuperacion
 
-        return 0 if imprimir_reporte(correr_evaluacion(llm, settings)) else 1
+        escenarios_ok = imprimir_reporte(correr_evaluacion(llm, settings))
+        print()
+        recuperacion_ok = imprimir_recuperacion(evaluar_recuperacion(), args.detallado)
+        return 0 if escenarios_ok and recuperacion_ok else 1
 
     if args.comando == "demo":
         for i, pregunta in enumerate(ESCENARIOS_DEMO, 1):
