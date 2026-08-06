@@ -34,3 +34,6 @@ jobs:
 
       - name: Evaluación (escenarios, fundamentación y recuperación)
         run: python -m enterprise_agents eval
+
+      - name: Suite de seguridad (inyección de prompt)
+        run: python -m enterprise_agents seguridad

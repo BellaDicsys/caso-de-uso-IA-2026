@@ -34,14 +34,15 @@ flowchart TD
 | Design system | propio (`ds.css` + `ds.js`) | tokens estilo Material 3, tema claro/oscuro, microinteracciones |
 | Tablero | SVG propio | KPIs + alertas tempranas + 3 gráficos, paleta validada para daltonismo |
 | Móvil | Web Speech API | chat de voz: dictado (SpeechRecognition) + respuesta hablada (speechSynthesis) |
-| Calidad | pytest + pytest-cov + ruff | 209 tests, cobertura 94% (umbral 85% en CI), lint y formato |
+| Calidad | pytest + pytest-cov + ruff | 245 tests, cobertura 94% (umbral 85% en CI), lint y formato |
 | Recuperación | propia (`recuperacion/`) | híbrida BM25 + espacio latente (SVD del corpus), fusión RRF; sin pesos preentrenados |
 | Evaluación | propia (`evaluacion/`) | 55 consultas etiquetadas, recall/MRR/nDCG con umbrales en CI y verificador de fundamentación |
+| Seguridad de agentes | propia (`seguridad/`) | saneamiento del contenido recuperado + suite de 7 ataques por inyección de prompt |
 | Versionado | propio (`versionado.py`) | semver automático desde Conventional Commits: changelog, tag y release en CI |
 
 ## Superficies de uso
 
-- **CLI** — `enterprise-agents demo | ask | eval | serve | version`
+- **CLI** — `enterprise-agents demo | ask | eval | seguridad | serve | version`
 - **Chat web** (`/`) — asistente conversacional sobre el orquestador
 - **Versión móvil** (`/movil`) — alcance reducido (solo chat) con **entrada y salida por voz**
 - **Tablero de control** (`/tablero`) — KPIs y **alertas tempranas** por severidad, con
@@ -70,6 +71,9 @@ enterprise-agents -v ask "¿Qué facturas vencidas hay que reclamar?"
 enterprise-agents eval
 enterprise-agents eval --recuperacion   # solo el motor, no necesita modelo
 
+# CLI: suite de inyección de prompt (tampoco necesita modelo)
+enterprise-agents seguridad
+
 # Web: chat + tablero + API en http://localhost:8000
 enterprise-agents serve
 ```
@@ -93,7 +97,7 @@ enterprise-agents ask --live "¿Cuánto facturamos a Banco Andino y quién puede
 ## Verificación
 
 ```bash
-python -m pytest --cov   # 209 tests + cobertura (94 %)
+python -m pytest --cov   # 245 tests + cobertura (94 %)
 ruff check .             # lint
 ruff format --check .    # formato
 ```
@@ -110,6 +114,12 @@ en cada push.
 | **Fundamentación** | que toda cifra de la respuesta la haya informado una herramienta | aparece un número que ninguna herramienta produjo |
 | Recuperación | recall@5, MRR, nDCG@5 sobre 51 consultas etiquetadas | cae por debajo del umbral |
 | Abstención | que las 4 consultas ajenas al dominio no devuelvan nada | el motor responde algo igual |
+| **Seguridad** | que 7 documentos con inyección queden contenidos por el saneamiento y las defensas estructurales | una instrucción inyectada llega sin marcar o rompe el delimitador |
+
+La suite de seguridad **declara su alcance**: verifica las defensas que son
+código —RBAC por herramienta, solo lectura, saneamiento— y no reclama haber
+probado que un modelo respete la delimitación, que es una propiedad del modelo.
+Fundamento en [ADR-0010](docs/adr/0010-seguridad-inyeccion-de-prompt.md).
 
 ## Versionado automático
 
@@ -141,6 +151,7 @@ GitHub con las notas generadas. Fundamento en
 
 ```
 ├── data/                      # Datos de ejemplo (ventas, proyectos, facturas, empleados, 30 documentos, usuarios)
+│   └── ataques/               # Documentos con inyecciones, solo para la suite de seguridad
 ├── docs/                      # Memoria, funcional, especificaciones, arquitectura, casos, vibecoding, ADRs
 ├── src/enterprise_agents/
 │   ├── orchestrator.py        # Orquestador (patrón agente-como-herramienta)
@@ -153,11 +164,12 @@ GitHub con las notas generadas. Fundamento en
 │   ├── api.py                 # API HTTP (FastAPI): chat, tablero, usuarios, móvil
 │   ├── evals.py               # Set de evaluación de escenarios de negocio
 │   ├── evaluacion/            # Métricas de recuperación + verificador de fundamentación
+│   ├── seguridad/             # Detección y saneamiento de inyecciones + suite de ataques
 │   ├── trazas.py              # Registro de herramientas ejecutadas por consulta
 │   ├── versionado.py          # Versionado automático (Conventional Commits → semver)
 │   ├── cli.py                 # CLI: demo / ask / eval / serve / version
 │   └── static/                # DS propio (ds.css/ds.js) + páginas (chat, tablero, usuarios, móvil, ayuda, login)
-└── tests/                     # Suite de tests (209, sin llamadas externas)
+└── tests/                     # Suite de tests (245, sin llamadas externas)
 ```
 
 ## Documentación

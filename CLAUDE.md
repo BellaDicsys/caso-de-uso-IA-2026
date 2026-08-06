@@ -14,6 +14,7 @@ ruff check . && ruff format --check .   # lint y formato (CI los exige)
 python -m enterprise_agents demo            # smoke test offline
 python -m enterprise_agents eval            # escenarios + fundamentación + recuperación
 python -m enterprise_agents eval --recuperacion  # solo métricas del motor (sin modelo)
+python -m enterprise_agents seguridad       # suite de inyección de prompt (sin modelo)
 python -m enterprise_agents version --proximo   # versión que se publicaría con los commits actuales
 ```
 
@@ -33,6 +34,9 @@ python -m enterprise_agents version --proximo   # versión que se publicaría co
   No reimplementar ninguno de los dos en un módulo nuevo.
 - **Recuperación**: toda búsqueda por relevancia —documentos o herramientas— pasa
   por `recuperacion/`. No agregar un segundo mecanismo de ranking.
+- **Contenido no confiable**: todo texto de una fuente externa que vaya a un
+  `tool_result` pasa por `seguridad.sanear()`. Una herramienta nueva que devuelva
+  contenido documental sin sanear es un agujero, no un detalle.
 - **Frontend**: los estilos y utilidades comunes viven en `static/ds.css` y
   `static/ds.js` (incluido `esc()` para escapar antes de cualquier `innerHTML`).
 - **Commits**: obligatorio [Conventional Commits](https://www.conventionalcommits.org/es/)

@@ -6,6 +6,7 @@ Uso:
     enterprise-agents ask --live "..."    # fuerza el uso de la API real
     enterprise-agents eval [--live]       # escenarios + fundamentación + recuperación
     enterprise-agents eval --recuperacion # solo métricas de recuperación (sin modelo)
+    enterprise-agents seguridad          # suite de inyección de prompt (sin modelo)
     enterprise-agents serve [--port N]    # API HTTP + chat web
     enterprise-agents version [--proximo] # versión actual / próxima según los commits
 
@@ -90,6 +91,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     ev.add_argument("--detallado", action="store_true", help="detalle consulta por consulta")
 
+    sub.add_parser("seguridad", help="suite de ataques por inyección de prompt")
+
     serve = sub.add_parser("serve", help="levanta la API HTTP y el chat web")
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", type=int, default=8000)
@@ -116,6 +119,12 @@ def main(argv: list[str] | None = None) -> int:
         from enterprise_agents.evaluacion.arnes import evaluar_recuperacion, imprimir_reporte
 
         return 0 if imprimir_reporte(evaluar_recuperacion(), args.detallado) else 1
+
+    if args.comando == "seguridad":
+        # No necesita modelo: verifica las defensas que son código.
+        from enterprise_agents.seguridad.ataques import imprimir_reporte
+
+        return 0 if imprimir_reporte() else 1
 
     if args.comando == "serve":
         # Import diferido: FastAPI/uvicorn solo se necesitan para la API.

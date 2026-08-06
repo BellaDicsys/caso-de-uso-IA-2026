@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from enterprise_agents.config import DOCS_DIR
 from enterprise_agents.recuperacion.motor import motor
+from enterprise_agents.seguridad.saneamiento import sanear
 from enterprise_agents.tools.base import ToolDef
 
 # Cuántos pasajes se le devuelven al modelo. Suficientes para responder la
@@ -32,10 +33,13 @@ def buscar_documentos(consulta: str) -> str:
     for resultado in resultados:
         fragmento = resultado.fragmento
         bloques.append(f"[{fragmento.documento}] {fragmento.migaja}\n{fragmento.texto}")
-    return (
+    # El contenido documental es entrada no confiable: se sanea antes de que
+    # llegue al modelo (ver seguridad/saneamiento.py y ADR-0010).
+    return sanear(
         "Pasajes relevantes del repositorio documental "
-        "(usar leer_documento si hace falta el texto completo):\n\n" + "\n\n".join(bloques)
-    )
+        "(usar leer_documento si hace falta el texto completo):\n\n" + "\n\n".join(bloques),
+        origen="buscar_documentos",
+    ).texto
 
 
 def leer_documento(nombre: str) -> str:
@@ -47,7 +51,7 @@ def leer_documento(nombre: str) -> str:
     if not path.exists():
         disponibles = ", ".join(p.name for p in sorted(DOCS_DIR.glob("*.md")))
         return f"No existe '{nombre}'. Documentos disponibles: {disponibles}."
-    return path.read_text(encoding="utf-8")
+    return sanear(path.read_text(encoding="utf-8"), origen=nombre).texto
 
 
 HERRAMIENTAS_DOCUMENTOS = [
