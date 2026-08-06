@@ -34,17 +34,19 @@ flowchart TD
 | Design system | propio (`ds.css` + `ds.js`) | tokens estilo Material 3, tema claro/oscuro, microinteracciones |
 | Tablero | SVG propio | KPIs + alertas tempranas + 3 gráficos, paleta validada para daltonismo |
 | Móvil | Web Speech API | chat de voz: dictado (SpeechRecognition) + respuesta hablada (speechSynthesis) |
-| Calidad | pytest + pytest-cov + ruff | 269 tests, cobertura 94% (umbral 85% en CI), lint y formato |
+| Calidad | pytest + pytest-cov + ruff | 300 tests, cobertura 95% (umbral 85% en CI), lint y formato |
 | Recuperación | propia (`recuperacion/`) | híbrida BM25 + espacio latente (SVD del corpus), fusión RRF; sin pesos preentrenados |
 | Evaluación | propia (`evaluacion/`) | 55 consultas etiquetadas, recall/MRR/nDCG con umbrales en CI y verificador de fundamentación |
 | Seguridad de agentes | propia (`seguridad/`) | saneamiento del contenido recuperado + suite de 7 ataques por inyección de prompt |
 | Observabilidad | propia (`trazas.py`) | árbol de spans por consulta con tiempos y tokens estimados, visor web en `/trazas` |
+| Memoria conversacional | propia (`memoria.py`) | historial por sesión con presupuesto de contexto, compactación extractiva y contextualización de repreguntas |
 | Versionado | propio (`versionado.py`) | semver automático desde Conventional Commits: changelog, tag y release en CI |
 
 ## Superficies de uso
 
 - **CLI** — `enterprise-agents demo | ask | eval | seguridad | serve | version`
-- **Chat web** (`/`) — asistente conversacional sobre el orquestador
+- **Chat web** (`/`) — asistente conversacional sobre el orquestador, **con memoria de la
+  conversación**: se puede repreguntar ("¿y la más antigua?") y reiniciar el hilo
 - **Versión móvil** (`/movil`) — alcance reducido (solo chat) con **entrada y salida por voz**
 - **Tablero de control** (`/tablero`) — KPIs y **alertas tempranas** por severidad, con
   gráficos de ventas, deuda por cliente y consumo de horas por proyecto (roles gestor/admin)
@@ -100,7 +102,7 @@ enterprise-agents ask --live "¿Cuánto facturamos a Banco Andino y quién puede
 ## Verificación
 
 ```bash
-python -m pytest --cov   # 269 tests + cobertura (94 %)
+python -m pytest --cov   # 300 tests + cobertura (95 %)
 ruff check .             # lint
 ruff format --check .    # formato
 ```
@@ -171,10 +173,11 @@ GitHub con las notas generadas. Fundamento en
 │   ├── trazas.py              # Trazas jerárquicas de ejecución (spans, tiempos, tokens)
 │   ├── tokens.py              # Estimador de tokens sin llamadas externas
 │   ├── registro.py            # Buffer en memoria de las últimas trazas
+│   ├── memoria.py             # Memoria conversacional: presupuesto, compactación, contexto
 │   ├── versionado.py          # Versionado automático (Conventional Commits → semver)
 │   ├── cli.py                 # CLI: demo / ask / eval / serve / version
 │   └── static/                # DS propio (ds.css/ds.js) + páginas (chat, tablero, usuarios, móvil, ayuda, login)
-└── tests/                     # Suite de tests (269, sin llamadas externas)
+└── tests/                     # Suite de tests (300, sin llamadas externas)
 ```
 
 ## Documentación

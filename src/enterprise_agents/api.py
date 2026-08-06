@@ -19,6 +19,7 @@ import sys
 from datetime import date
 from functools import lru_cache
 from pathlib import Path
+from threading import Lock
 
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
@@ -38,6 +39,7 @@ from enterprise_agents.auth import (
 from enterprise_agents.config import Settings, load_settings
 from enterprise_agents.llm.base import LLMClient
 from enterprise_agents.llm.mock_client import MockLLMClient
+from enterprise_agents.memoria import Conversacion
 from enterprise_agents.metrics import calcular_metricas
 from enterprise_agents.orchestrator import crear_orquestador
 from enterprise_agents.registro import RegistroTrazas
@@ -61,6 +63,9 @@ class Consulta(BaseModel):
 class Respuesta(BaseModel):
     respuesta: str
     modo: str
+    # Estado de la memoria conversacional, para que la interfaz pueda mostrarlo.
+    turnos: int = 0
+    tokens_memoria: int = 0
 
 
 class Credenciales(BaseModel):
@@ -88,6 +93,11 @@ def crear_app(settings: Settings | None = None) -> FastAPI:
     sesiones = AlmacenSesiones()
     intentos = ControlIntentos()
     registro = RegistroTrazas()
+    # Una conversación por sesión. En memoria, igual que las sesiones y las
+    # trazas, y con el mismo riesgo aceptado: con varios workers haría falta un
+    # almacén compartido.
+    conversaciones: dict[str, Conversacion] = {}
+    lock_conversaciones = Lock()
     # Los agentes son stateless: se construye un orquestador por rol una sola
     # vez y se reusa entre requests (evita rearmarlo en cada consulta).
     orquestadores = {
@@ -182,7 +192,10 @@ def crear_app(settings: Settings | None = None) -> FastAPI:
 
     @app.post("/salir")
     def salir(request: Request):
-        sesiones.cerrar(request.cookies.get(_COOKIE))
+        token = request.cookies.get(_COOKIE)
+        with lock_conversaciones:
+            conversaciones.pop(token or "", None)
+        sesiones.cerrar(token)
         respuesta = RedirectResponse("/login", status_code=303)
         respuesta.delete_cookie(_COOKIE)
         return respuesta
@@ -208,17 +221,39 @@ def crear_app(settings: Settings | None = None) -> FastAPI:
         """Versión móvil: alcance reducido (solo chat) con entrada/salida por voz."""
         return _pagina(request, "movil.html")
 
+    def _conversacion(token: str) -> Conversacion:
+        with lock_conversaciones:
+            return conversaciones.setdefault(token, Conversacion())
+
     @app.post("/consultar", response_model=Respuesta)
     def consultar(request: Request, consulta: Consulta) -> Respuesta:
         sesion = _requerir(request)
         # RBAC a nivel de herramienta: el rol define qué dominios puede consultar.
         orquestador = orquestadores[sesion["rol"]]
+        conversacion = _conversacion(request.cookies.get(_COOKIE, ""))
+        historial = conversacion.mensajes()
+
         # Toda consulta queda trazada: sin esto no hay forma de auditar por qué
         # el asistente respondió lo que respondió (ver ADR-0011).
         with trazas.capturar(consulta.pregunta, modo=modo) as traza:
-            traza.respuesta = orquestador.run(consulta.pregunta)
+            traza.respuesta = orquestador.run(consulta.pregunta, historial=historial)
         registro.agregar(traza)
-        return Respuesta(respuesta=traza.respuesta, modo=modo)
+
+        conversacion.agregar("user", consulta.pregunta)
+        conversacion.agregar("assistant", traza.respuesta)
+        return Respuesta(
+            respuesta=traza.respuesta,
+            modo=modo,
+            turnos=len(conversacion.turnos),
+            tokens_memoria=conversacion.tokens,
+        )
+
+    @app.post("/conversacion/reiniciar")
+    def reiniciar_conversacion(request: Request) -> dict[str, str]:
+        """Descarta la memoria de la sesión sin cerrarla."""
+        _requerir(request)
+        _conversacion(request.cookies.get(_COOKIE, "")).limpiar()
+        return {"estado": "reiniciada"}
 
     # --- Observabilidad -----------------------------------------------------
 

@@ -53,7 +53,7 @@ citadas, producida por un sistema de agentes de IA.
 | RNF-02 | Seguridad: validación de argumentos generados por el modelo | Bloqueo de path traversal; errores encapsulados como `tool_result` |
 | RNF-03 | Privacidad: minimización de datos de personas | Prompt del gestor de personal; datos sintéticos |
 | RNF-04 | Control de costos: sin bucles infinitos | `max_iterations` en todo bucle; prompt caching en modo live |
-| RNF-05 | Calidad verificable en CI | 269 tests + cobertura ≥ 85 % + lint + formato + smoke test en cada push |
+| RNF-05 | Calidad verificable en CI | 300 tests + cobertura ≥ 85 % + lint + formato + smoke test en cada push |
 | RNF-06 | Idioma: interacción y documentación en español | Prompts, CLI, docs |
 
 ### 3.3 Fuera de alcance (versión demo)
@@ -63,8 +63,8 @@ citadas, producida por un sistema de agentes de IA.
 - Conexión a sistemas reales (DWH, gestor documental, HRIS) — diseñada y documentada
   en `arquitectura.md` § Camino a producción, no implementada.
 - Escritura de datos (la suite es de solo lectura sobre los datos de ejemplo).
-- **Memoria conversacional**: cada consulta se resuelve de forma independiente; el
-  agente no recibe los turnos anteriores.
+- Memoria conversacional **persistente**: el historial vive en la sesión y se descarta
+  al salir.
 
 ## 4. Casos de uso
 
@@ -139,7 +139,7 @@ pip install -e ".[dev]"
 
 | Paso | Comando | Criterio de aceptación |
 |---|---|---|
-| 1 | `python -m pytest --cov` | 269 tests OK y cobertura ≥ 85 %, sin red |
+| 1 | `python -m pytest --cov` | 300 tests OK y cobertura ≥ 85 %, sin red |
 | 2 | `ruff check . && ruff format --check .` | Sin errores |
 
 ### 5.3 Pruebas funcionales en modo demo (sin API key)

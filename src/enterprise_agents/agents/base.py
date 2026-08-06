@@ -35,9 +35,15 @@ class Agent:
         self.llm = llm
         self.max_iterations = max_iterations
 
-    def run(self, task: str) -> str:
-        """Ejecuta el bucle agéntico completo para una tarea y devuelve texto."""
-        messages: list[dict[str, Any]] = [{"role": "user", "content": task}]
+    def run(self, task: str, historial: list[dict[str, Any]] | None = None) -> str:
+        """Ejecuta el bucle agéntico completo para una tarea y devuelve texto.
+
+        `historial` son los turnos previos de la conversación, en formato Messages
+        API. Solo lo usa el orquestador: los especialistas reciben tareas
+        autocontenidas y siguen siendo *stateless*, que es lo que permite
+        construirlos una vez y reusarlos entre requests.
+        """
+        messages: list[dict[str, Any]] = [*(historial or []), {"role": "user", "content": task}]
         tools_api = [tool.to_esquema() for tool in self.tools.values()]
 
         for _ in range(self.max_iterations):

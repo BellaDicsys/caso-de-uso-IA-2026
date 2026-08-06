@@ -138,3 +138,49 @@ def test_el_limite_de_trazas_se_acota(cliente):
     entrar(cliente, "admin")
     assert cliente.get("/trazas/api?limite=999").status_code == 200
     assert cliente.get("/trazas/api?limite=0").status_code == 200
+
+
+# --- Memoria conversacional -------------------------------------------------
+
+
+def test_el_asistente_recuerda_dentro_de_la_sesion(cliente):
+    entrar(cliente, "gestion")
+    cliente.post("/consultar", json={"pregunta": "¿Qué facturas vencidas hay que reclamar?"})
+    datos = cliente.post("/consultar", json={"pregunta": "¿y la más antigua?"}).json()
+    assert "FC-2026" in datos["respuesta"]
+    assert datos["turnos"] == 4  # dos preguntas y dos respuestas
+    assert datos["tokens_memoria"] > 0
+
+
+def test_reiniciar_borra_la_memoria_sin_cerrar_la_sesion(cliente):
+    entrar(cliente, "gestion")
+    cliente.post("/consultar", json={"pregunta": "¿Qué facturas vencidas hay?"})
+    assert cliente.post("/conversacion/reiniciar").json()["estado"] == "reiniciada"
+    datos = cliente.post("/consultar", json={"pregunta": "¿Cuánto facturamos este año?"}).json()
+    assert datos["turnos"] == 2  # arrancó de cero
+    assert cliente.get("/sesion").status_code == 200  # la sesión sigue viva
+
+
+def test_reiniciar_requiere_sesion(cliente):
+    assert cliente.post("/conversacion/reiniciar").status_code == 401
+
+
+def test_cada_sesion_tiene_su_propia_memoria(cliente, usuarios_temporales):
+    from fastapi.testclient import TestClient
+
+    entrar(cliente, "gestion")
+    cliente.post("/consultar", json={"pregunta": "¿Qué facturas vencidas hay?"})
+
+    otro = TestClient(cliente.app, base_url="https://testserver")
+    entrar(otro, "admin")
+    datos = otro.post("/consultar", json={"pregunta": "¿Cuánto facturamos?"}).json()
+    assert datos["turnos"] == 2  # no heredó la conversación de la otra sesión
+
+
+def test_salir_descarta_la_memoria(cliente):
+    entrar(cliente, "gestion")
+    cliente.post("/consultar", json={"pregunta": "¿Qué facturas vencidas hay?"})
+    cliente.post("/salir")
+    entrar(cliente, "gestion")
+    datos = cliente.post("/consultar", json={"pregunta": "¿Cuánto facturamos?"}).json()
+    assert datos["turnos"] == 2

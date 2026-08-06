@@ -88,7 +88,8 @@ class MockLLMClient:
                 )
 
         texto_usuario = self._texto_del_usuario(messages)
-        eleccion = self._elegir_herramienta(texto_usuario, tools)
+        contexto = self._contexto_previo(messages)
+        eleccion = self._elegir_herramienta(texto_usuario, tools, contexto)
         if eleccion is None:
             return LLMReply(
                 content=[
@@ -116,6 +117,26 @@ class MockLLMClient:
             ],
             stop_reason="tool_use",
         )
+
+    @staticmethod
+    def _contexto_previo(messages: list[dict[str, Any]]) -> str:
+        """Términos de la consulta anterior del usuario, si la hay.
+
+        El modelo real entiende la referencia de una repregunta leyendo el
+        historial. El cliente simulado no razona, así que necesita el referente
+        explícito: se lo arma con los términos informativos del turno previo.
+        """
+        from enterprise_agents.memoria import es_autosuficiente
+        from enterprise_agents.recuperacion.terminos import terminos
+
+        anteriores = [m for m in messages if m.get("role") == "user"]
+        if len(anteriores) < 2:
+            return ""
+        actual = anteriores[-1].get("content")
+        if isinstance(actual, str) and es_autosuficiente(actual):
+            return ""
+        previa = anteriores[-2].get("content")
+        return " ".join(terminos(previa)) if isinstance(previa, str) else ""
 
     @staticmethod
     def _texto_del_usuario(messages: list[dict[str, Any]]) -> str:
@@ -146,12 +167,22 @@ class MockLLMClient:
         return router
 
     def _elegir_herramienta(
-        self, texto: str, tools: list[dict[str, Any]]
+        self, texto: str, tools: list[dict[str, Any]], contexto: str = ""
     ) -> tuple[str, dict[str, Any]] | None:
-        eleccion = self._router(tools).elegir(texto)
+        # Una repregunta ("¿y la más antigua?") no se rutea sola: se la completa
+        # con los términos del turno anterior antes de elegir herramienta.
+        contextualizada = f"{texto} {contexto}".strip()
+        eleccion = self._router(tools).elegir(contextualizada)
         if eleccion is None:
             return None
-        return eleccion.nombre, self._armar_argumentos(eleccion.nombre, texto, normalizar(texto))
+        # La tarea que se delega va contextualizada, no cruda: el esquema de la
+        # herramienta de delegación pide una tarea "autocontenida con todo el
+        # contexto necesario", y eso es justo lo que un modelo real redactaría.
+        # Sin esto el orquestador rutea bien y el especialista recibe "¿y la más
+        # antigua?" sin referente, así que falla un nivel más abajo.
+        return eleccion.nombre, self._armar_argumentos(
+            eleccion.nombre, contextualizada, normalizar(contextualizada)
+        )
 
     @staticmethod
     def _armar_argumentos(nombre: str, texto: str, texto_norm: str) -> dict[str, Any]:

@@ -90,7 +90,7 @@ documentada en [guia-vibecoding.md](guia-vibecoding.md):
 |---|---|
 | Producto | Suite con 4 dominios de negocio, 5 escenarios de demo, consultas libres, API HTTP y chat web |
 | Código | ~5.500 líneas (código, tests, datos y docs); núcleo con 1 sola dependencia de runtime |
-| Calidad | 269 tests automatizados (cobertura 94 %) + set de evaluación de 6 escenarios; lint y formato limpios; CI en GitHub Actions; auditoría adversarial documentada |
+| Calidad | 300 tests automatizados (cobertura 95 %) + set de evaluación de 6 escenarios; lint y formato limpios; CI en GitHub Actions; auditoría adversarial documentada |
 | Evaluabilidad | Demo completa sin credenciales en 2 comandos |
 | Documentación | 9 documentos (incluida la guía de uso para el usuario final): arquitectura, especificaciones técnicas, funcional, memoria, investigación de mercado, guía de vibecoding, auditoría adversarial y 6 ADRs, más el changelog generado |
 | Seguridad | Validación de argumentos del modelo, bloqueo de path traversal, límites de iteración, manejo de rechazos del modelo |
@@ -105,9 +105,9 @@ documentada en [guia-vibecoding.md](guia-vibecoding.md):
    con el alta de finanzas sin tocar el resto del sistema.
 4. **Evaluación continua** — el set de evaluación ya corre en CI en modo mock;
    siguiente paso: ejecutarlo periódicamente contra el modelo real (`eval --live`).
-5. **Memoria conversacional** — hoy cada consulta se resuelve de cero; el paso
-   siguiente es arrastrar los turnos previos por sesión, con una política de
-   truncado y el prompt caching ya implementado para acotar el costo.
+5. **Memoria entre sesiones** — la conversación ya persiste dentro de la sesión con
+   presupuesto y compactación; el paso siguiente es conservarla entre sesiones y
+   por usuario, con una política de retención acordada.
 6. **Gobernanza productiva** — permisos por herramienta y usuario, auditoría
    centralizada, políticas de datos sensibles.
 

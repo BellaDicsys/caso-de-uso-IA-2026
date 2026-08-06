@@ -123,3 +123,4 @@ Las decisiones estructurales están documentadas como ADRs en [`docs/adr/`](adr/
 - [ADR-0009 — Arnés de evaluación y verificación de fundamentación](adr/0009-evaluacion-y-fundamentacion.md)
 - [ADR-0010 — Defensa en profundidad contra inyección de prompt](adr/0010-seguridad-inyeccion-de-prompt.md)
 - [ADR-0011 — Observabilidad: trazas de ejecución y estimación de tokens](adr/0011-observabilidad-y-trazas.md)
+- [ADR-0012 — Memoria conversacional con compactación y contextualización](adr/0012-memoria-conversacional.md)

@@ -102,8 +102,9 @@ ayuda completa queda siempre disponible en **`/ayuda`**.
 - Preguntar por el **negocio**, no por el archivo.
 - Una intención por consulta; si necesitás dos cosas, preguntá dos veces.
 - Pedir el criterio ("…y decime cómo lo calculaste") para que explicite fuente y cálculo.
-- **Cada consulta es independiente**: el asistente no recuerda la anterior, así que al
-  repreguntar conviene repetir el contexto.
+- **Se puede repreguntar**: el asistente recuerda la conversación dentro de la sesión,
+  así que "¿y la más antigua?" funciona. El chat muestra cuántos turnos recuerda y el
+  botón 🧹 empieza un hilo nuevo.
 
 ---
 
@@ -156,8 +157,8 @@ de la versión de Safari. Si no está disponible, el chat sigue funcionando escr
 
 - Responde **solo** sobre los cuatro dominios; fuera de alcance lo dice en vez de improvisar.
 - **Solo lectura**: no emite facturas, no asigna personas, no modifica documentos.
-- **Sin memoria conversacional**: cada consulta se resuelve de cero (ver *Líneas de
-  evolución* en la memoria descriptiva).
+- **La memoria dura lo que la sesión**: al salir se descarta, y una referencia a varios
+  turnos atrás puede no resolverse en modo demo.
 - Los datos son **sintéticos**, representativos pero no reales.
 - En **modo demo** resuelve un dominio por consulta; las consultas que cruzan dos
   dominios requieren el modelo real (`--live`).

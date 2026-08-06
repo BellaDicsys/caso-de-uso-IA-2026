@@ -43,6 +43,8 @@
   <button class="ds-btn texto" id="parlante" aria-label="leer respuestas en voz alta"
           title="leer respuestas en voz alta">🔊</button>
   <a class="ds-btn texto" href="/ayuda" aria-label="ayuda" title="ayuda">❔</a>
+  <button class="ds-btn texto" id="reiniciar" aria-label="conversación nueva"
+          title="conversación nueva">🧹</button>
   <button class="ds-tema" onclick="alternarTema()" aria-label="cambiar tema"></button>
   <a class="ds-tab" href="/" aria-label="versión de escritorio" title="versión completa">🖥</a>
 </header>
@@ -60,6 +62,15 @@ documentos o el equipo. Tocá el micrófono para hablar.</div></div>
   <button class="mic" id="mic" aria-label="dictar consulta por voz" title="hablar">🎙</button>
 </footer>
 <script src="/ds.js"></script>
+<script>
+  // Reinicio de la memoria conversacional, igual que en la versión de escritorio.
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("reiniciar").addEventListener("click", async () => {
+      await pedir("/conversacion/reiniciar", {method: "POST"}).catch(() => null);
+      snackbar("Conversación reiniciada.");
+    });
+  });
+</script>
 <script>
   const conversacion = document.getElementById("conversacion");
   const entrada = document.getElementById("entrada");
