@@ -1,37 +1,40 @@
 """Herramientas de gestión documental sobre `data/documentos/`.
 
-Búsqueda léxica simple por términos. En un despliegue real este módulo se
-reemplaza por búsqueda semántica sobre el repositorio documental del cliente
-(ver docs/arquitectura.md).
+La búsqueda usa el motor de recuperación híbrido (`recuperacion/`): BM25 y
+espacio latente fusionados por RRF, sobre fragmentos y no sobre documentos
+enteros. Devuelve el pasaje concreto además del nombre del archivo, de modo que
+el agente pueda responder sin tener que leer el documento completo.
+
+La versión anterior contaba coincidencias de subcadena por documento. Con tres
+documentos alcanzaba; con treinta dejó de funcionar —"¿qué dice la política de
+vacaciones?" devolvía primero la política de teletrabajo, porque "política"
+aparece en casi todos los títulos— y ese fue el motivo del cambio.
 """
 
 from __future__ import annotations
 
 from enterprise_agents.config import DOCS_DIR
-from enterprise_agents.text import normalizar
+from enterprise_agents.recuperacion.motor import motor
 from enterprise_agents.tools.base import ToolDef
+
+# Cuántos pasajes se le devuelven al modelo. Suficientes para responder la
+# mayoría de las consultas sin llamar a leer_documento, sin inundar el contexto.
+PASAJES = 4
 
 
 def buscar_documentos(consulta: str) -> str:
-    # ≥ 3 conserva acrónimos como SLA/ERP/API sin caer en palabras vacías (de, el).
-    terminos = [t for t in normalizar(consulta).split() if len(t) >= 3]
-    resultados = []
-    for path in sorted(DOCS_DIR.glob("*.md")):
-        texto = path.read_text(encoding="utf-8")
-        texto_norm = normalizar(texto)
-        coincidencias = sum(texto_norm.count(t) for t in terminos)
-        if coincidencias:
-            primera_linea = texto.strip().splitlines()[0].lstrip("# ")
-            resultados.append((coincidencias, path.name, primera_linea))
-
+    resultados = motor().buscar(consulta, k=PASAJES)
     if not resultados:
         disponibles = ", ".join(p.name for p in sorted(DOCS_DIR.glob("*.md")))
         return f"Sin coincidencias para '{consulta}'. Documentos disponibles: {disponibles}."
 
-    resultados.sort(reverse=True)
-    lineas = [f"  - {nombre} ({titulo}) — {n} coincidencias" for n, nombre, titulo in resultados]
-    return "Documentos relevantes (usar leer_documento para el contenido completo):\n" + "\n".join(
-        lineas
+    bloques = []
+    for resultado in resultados:
+        fragmento = resultado.fragmento
+        bloques.append(f"[{fragmento.documento}] {fragmento.migaja}\n{fragmento.texto}")
+    return (
+        "Pasajes relevantes del repositorio documental "
+        "(usar leer_documento si hace falta el texto completo):\n\n" + "\n\n".join(bloques)
     )
 
 
@@ -52,9 +55,11 @@ HERRAMIENTAS_DOCUMENTOS = [
         name="buscar_documentos",
         description=(
             "Busca en el repositorio documental interno (políticas, manuales, "
-            "contratos) y devuelve los documentos más relevantes para una consulta. "
+            "contratos) y devuelve los pasajes más relevantes para una consulta, "
+            "con el documento y la sección de la que salió cada uno. "
             "Llamala primero cuando la consulta refiera a normativa interna, "
-            "beneficios, contratos o procesos."
+            "beneficios, contratos o procesos. Los pasajes suelen alcanzar para "
+            "responder: solo usá leer_documento si necesitás el texto completo."
         ),
         input_schema={
             "type": "object",

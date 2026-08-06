@@ -90,7 +90,7 @@ documentada en [guia-vibecoding.md](guia-vibecoding.md):
 |---|---|
 | Producto | Suite con 4 dominios de negocio, 5 escenarios de demo, consultas libres, API HTTP y chat web |
 | Código | ~5.500 líneas (código, tests, datos y docs); núcleo con 1 sola dependencia de runtime |
-| Calidad | 96 tests automatizados (cobertura 94 %) + set de evaluación de 6 escenarios; lint y formato limpios; CI en GitHub Actions; auditoría adversarial documentada |
+| Calidad | 143 tests automatizados (cobertura 93 %) + set de evaluación de 6 escenarios; lint y formato limpios; CI en GitHub Actions; auditoría adversarial documentada |
 | Evaluabilidad | Demo completa sin credenciales en 2 comandos |
 | Documentación | 9 documentos (incluida la guía de uso para el usuario final): arquitectura, especificaciones técnicas, funcional, memoria, investigación de mercado, guía de vibecoding, auditoría adversarial y 6 ADRs, más el changelog generado |
 | Seguridad | Validación de argumentos del modelo, bloqueo de path traversal, límites de iteración, manejo de rechazos del modelo |

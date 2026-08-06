@@ -34,7 +34,8 @@ flowchart TD
 | Design system | propio (`ds.css` + `ds.js`) | tokens estilo Material 3, tema claro/oscuro, microinteracciones |
 | Tablero | SVG propio | KPIs + alertas tempranas + 3 gráficos, paleta validada para daltonismo |
 | Móvil | Web Speech API | chat de voz: dictado (SpeechRecognition) + respuesta hablada (speechSynthesis) |
-| Calidad | pytest + pytest-cov + ruff | 96 tests, cobertura 94% (umbral 85% en CI), lint y formato |
+| Calidad | pytest + pytest-cov + ruff | 143 tests, cobertura 93% (umbral 85% en CI), lint y formato |
+| Recuperación | propia (`recuperacion/`) | híbrida BM25 + espacio latente (SVD del corpus), fusión RRF; sin pesos preentrenados |
 | Versionado | propio (`versionado.py`) | semver automático desde Conventional Commits: changelog, tag y release en CI |
 
 ## Superficies de uso
@@ -90,7 +91,7 @@ enterprise-agents ask --live "¿Cuánto facturamos a Banco Andino y quién puede
 ## Verificación
 
 ```bash
-python -m pytest --cov   # 96 tests + cobertura (94 %)
+python -m pytest --cov   # 143 tests + cobertura (93 %)
 ruff check .             # lint
 ruff format --check .    # formato
 ```
@@ -127,13 +128,14 @@ GitHub con las notas generadas. Fundamento en
 ## Estructura del repositorio
 
 ```
-├── data/                      # Datos de ejemplo (ventas, proyectos, facturas, empleados, documentos, usuarios)
+├── data/                      # Datos de ejemplo (ventas, proyectos, facturas, empleados, 30 documentos, usuarios)
 ├── docs/                      # Memoria, funcional, especificaciones, arquitectura, casos, vibecoding, ADRs
 ├── src/enterprise_agents/
 │   ├── orchestrator.py        # Orquestador (patrón agente-como-herramienta)
 │   ├── agents/                # Bucle agéntico + 4 especialistas
 │   ├── tools/                 # Herramientas de dominio (analítica, finanzas, documentos, personal)
 │   ├── llm/                   # Capa LLM: cliente Anthropic + cliente mock
+│   ├── recuperacion/          # Motor híbrido: fragmentos, BM25, SVD propia, fusión RRF
 │   ├── metrics.py             # KPIs y alertas tempranas del tablero
 │   ├── auth.py                # Autenticación, usuarios y roles (RBAC)
 │   ├── api.py                 # API HTTP (FastAPI): chat, tablero, usuarios, móvil
@@ -141,7 +143,7 @@ GitHub con las notas generadas. Fundamento en
 │   ├── versionado.py          # Versionado automático (Conventional Commits → semver)
 │   ├── cli.py                 # CLI: demo / ask / eval / serve / version
 │   └── static/                # DS propio (ds.css/ds.js) + páginas (chat, tablero, usuarios, móvil, ayuda, login)
-└── tests/                     # Suite de tests (96, sin llamadas externas)
+└── tests/                     # Suite de tests (143, sin llamadas externas)
 ```
 
 ## Documentación
