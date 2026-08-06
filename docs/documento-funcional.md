@@ -58,10 +58,13 @@ citadas, producida por un sistema de agentes de IA.
 
 ### 3.3 Fuera de alcance (versión demo)
 
-- Deploy productivo y autenticación de usuarios (el chat web es local, para demos).
+- Deploy productivo (la autenticación y los roles sí están implementados, con un
+  almacén local de usuarios y claves de demostración documentadas).
 - Conexión a sistemas reales (DWH, gestor documental, HRIS) — diseñada y documentada
   en `arquitectura.md` § Camino a producción, no implementada.
 - Escritura de datos (la suite es de solo lectura sobre los datos de ejemplo).
+- **Memoria conversacional**: cada consulta se resuelve de forma independiente; el
+  agente no recibe los turnos anteriores.
 
 ## 4. Casos de uso
 

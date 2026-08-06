@@ -105,7 +105,10 @@ documentada en [guia-vibecoding.md](guia-vibecoding.md):
    con el alta de finanzas sin tocar el resto del sistema.
 4. **Evaluación continua** — el set de evaluación ya corre en CI en modo mock;
    siguiente paso: ejecutarlo periódicamente contra el modelo real (`eval --live`).
-5. **Gobernanza productiva** — permisos por herramienta y usuario, auditoría
+5. **Memoria conversacional** — hoy cada consulta se resuelve de cero; el paso
+   siguiente es arrastrar los turnos previos por sesión, con una política de
+   truncado y el prompt caching ya implementado para acotar el costo.
+6. **Gobernanza productiva** — permisos por herramienta y usuario, auditoría
    centralizada, políticas de datos sensibles.
 
 ## 7. Conclusión
