@@ -8,6 +8,16 @@ automáticamente desde los *Conventional Commits* (ver
 Las versiones anteriores a la puesta en marcha del versionado automático se
 reconstruyeron a partir del historial.
 
+## 0.5.0 — 2026-08-06
+
+### Nuevas funcionalidades
+
+- **ayuda**: sección de ayuda e inducción al usuario
+
+### Documentación
+
+- sincroniza las métricas del proyecto con el estado actual
+
 ## 0.4.0 — 2026-08-05
 
 ### Nuevas funcionalidades
